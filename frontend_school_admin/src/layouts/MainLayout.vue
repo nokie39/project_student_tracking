@@ -1,34 +1,35 @@
 <template>
   <v-layout>
-    <v-navigation-drawer v-model="drawer" color="primary">
-      <div class="d-flex flex-column align-center pa-4">
-        <v-avatar color="white" size="64">
-          <span class="text-h5 text-primary font-weight-bold">ST</span>
+    <v-navigation-drawer v-model="drawer" color="primary" elevation="2" class="border-none">
+      <div class="d-flex flex-column align-center pa-6">
+        <v-avatar color="white" size="70" class="elevation-3 mb-3">
+          <span class="text-h4 font-weight-bold text-primary">{{ userInitial }}</span>
         </v-avatar>
-        <div class="text-white mt-3 font-weight-bold">Student Tracking</div>
-        <div class="text-white text-caption">{{ userRole.toUpperCase() }}</div>
+        <div class="text-white font-weight-bold text-h6">Admin Portal</div>
+        <div class="text-blue-lighten-4 text-caption">{{ userName }}</div>
       </div>
 
-      <v-divider class="border-opacity-50"></v-divider>
+      <v-divider class="border-opacity-25 mb-2"></v-divider>
 
-      <v-list density="compact" nav>
+      <v-list density="compact" nav class="pa-2">
         <v-list-item
-          v-for="(item, i) in filteredMenus"
+          v-for="(item, i) in adminMenus"
           :key="i"
           :to="item.path"
-          color="white" 
-          rounded="xl"
+          active-class="bg-white text-primary font-weight-bold elevation-1"
+          rounded="lg"
+          class="mb-1"
         >
           <template v-slot:prepend>
             <v-icon :icon="item.icon"></v-icon>
           </template>
-          <v-list-item-title>{{ item.title }}</v-list-item-title>
+          <v-list-item-title class="text-body-2">{{ item.title }}</v-list-item-title>
         </v-list-item>
       </v-list>
 
       <template v-slot:append>
-        <div class="pa-2">
-          <v-btn block color="error" variant="tonal" @click="logout">
+        <div class="pa-4">
+          <v-btn block color="white" variant="outlined" class="text-white" @click="logout">
             <v-icon start>mdi-logout</v-icon>
             ອອກຈາກລະບົບ
           </v-btn>
@@ -36,14 +37,28 @@
       </template>
     </v-navigation-drawer>
 
-    <v-app-bar elevation="1">
-      <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-      <v-app-bar-title>{{ currentPageTitle }}</v-app-bar-title>
+    <v-app-bar elevation="0" class="border-b bg-white">
+      <v-app-bar-nav-icon @click="drawer = !drawer" color="grey-darken-2"></v-app-bar-nav-icon>
+      
+      <v-app-bar-title class="text-grey-darken-2 font-weight-bold">
+        {{ currentPageTitle }}
+      </v-app-bar-title>
+
+      <template v-slot:append>
+        <v-chip color="primary" variant="flat" size="small" class="mr-4">
+          <v-icon start icon="mdi-shield-account"></v-icon>
+          Administrator
+        </v-chip>
+      </template>
     </v-app-bar>
 
-    <v-main class="bg-grey-lighten-4">
-      <v-container fluid>
-        <router-view></router-view>
+    <v-main class="bg-grey-lighten-5">
+      <v-container fluid class="pa-6 h-100">
+        <router-view v-slot="{ Component }">
+          <v-fade-transition mode="out-in">
+            <component :is="Component" />
+          </v-fade-transition>
+        </router-view>
       </v-container>
     </v-main>
   </v-layout>
@@ -56,38 +71,45 @@ import { useRouter, useRoute } from 'vue-router';
 const drawer = ref(true);
 const router = useRouter();
 const route = useRoute();
-const userRole = localStorage.getItem('role') || 'guest';
 
-/**
- * 💡 ຈຸດປັບປຸງ: ອັບເດດ Path ໃຫ້ມີ /admin/ ນຳໜ້າ 
- * ເພື່ອໃຫ້ກົງກັບ children routes ໃນ router/index.js
- */
-const allMenus = [
-  { title: 'Dashboard', icon: 'mdi-view-dashboard', path: '/admin/dashboard', roles: ['admin', 'teacher'] },
-  { title: 'ຈັດການປີການສຶກສາ', icon: 'mdi-calendar-range', path: '/admin/years', roles: ['admin'] },
-  { title: 'ຈັດການຫ້ອງຮຽນ', icon: 'mdi-google-classroom', path: '/admin/classes', roles: ['admin'] },
-  { title: 'ຈັດການຜູ້ໃຊ້', icon: 'mdi-account-cog', path: '/admin/users', roles: ['admin'] },
-  { title: 'ຈັດການນັກຮຽນ', icon: 'mdi-account-school', path: '/admin/students', roles: ['admin', 'teacher'] },
-  { title: 'ຈັດການວິຊາການ', icon: 'mdi-school', path: '/admin/academic', roles: ['admin'] },
-  { title: 'ເຊັກຊື່', icon: 'mdi-calendar-check', path: '/admin/attendance', roles: ['admin', 'teacher'] },
-  { title: 'ຄະແນນ', icon: 'mdi-clipboard-list-outline', path: '/admin/grades', roles: ['admin', 'teacher'] },
-  { title: 'ພຶດຕິກຳ/ຈິດພິໄສ', icon: 'mdi-star-circle', path: '/admin/behavior', roles: ['admin', 'teacher'] },
-  { title: 'ສັ່ງວຽກບ້ານ (LMS)', icon: 'mdi-book-open-variant', path: '/admin/lms', roles: ['admin', 'teacher'] },
+// User Info from LocalStorage
+const userName = localStorage.getItem('user') || 'Admin';
+const userInitial = computed(() => userName.charAt(0).toUpperCase());
+
+// ✅ Admin Specific Menu (ລວມທຸກເມນູໃຫ້ Admin ເຫັນໝົດ)
+const adminMenus = [
+  { title: 'Dashboard', icon: 'mdi-view-dashboard-outline', path: '/admin/dashboard' },
+  
+  // 1. ຈັດການຂໍ້ມູນຫຼັກ
+  { title: 'ຈັດການປີການສຶກສາ', icon: 'mdi-calendar-range', path: '/admin/years' },
+  { title: 'ຈັດການຫ້ອງຮຽນ', icon: 'mdi-google-classroom', path: '/admin/classes' },
+  { title: 'ຈັດການຜູ້ໃຊ້ (Users)', icon: 'mdi-account-cog-outline', path: '/admin/users' },
+  { title: 'ຈັດການນັກຮຽນ', icon: 'mdi-account-school-outline', path: '/admin/students' },
+
+  // 2. ຈັດການການຮຽນ-ການສອນ (Admin ກໍຄວນເຫັນ)
+  { title: 'ວິຊາການ (ຕາຕະລາງ)', icon: 'mdi-school-outline', path: '/admin/academic' },
+  { title: 'ເຊັກຊື່ (Attendance)', icon: 'mdi-calendar-check-outline', path: '/admin/attendance' },
+  { title: 'ຄະແນນ (Grades)', icon: 'mdi-clipboard-list-outline', path: '/admin/grades' },
+  { title: 'ພຶດຕິກຳ (Behavior)', icon: 'mdi-star-circle-outline', path: '/admin/behavior' },
+  { title: 'ສັ່ງວຽກບ້ານ (LMS)', icon: 'mdi-book-open-variant-outline', path: '/admin/lms' },
 ];
 
-// ກອງເມນູຕາມສິດ (Role)
-const filteredMenus = computed(() => {
-  return allMenus.filter(item => item.roles.includes(userRole));
-});
-
-// ຊື່ໜ້າປັດຈຸບັນ
+// Current Page Title Logic
 const currentPageTitle = computed(() => {
-  const current = allMenus.find(m => m.path === route.path);
-  return current ? current.title : 'Student Tracking';
+  const current = adminMenus.find(m => m.path === route.path);
+  return current ? current.title : 'Admin Dashboard';
 });
 
 const logout = () => {
-  localStorage.clear();
-  router.push('/login');
+  if(confirm("ຕ້ອງການອອກຈາກລະບົບແທ້ບໍ່?")) {
+    localStorage.clear();
+    router.push('/login');
+  }
 };
 </script>
+
+<style scoped>
+.v-navigation-drawer {
+  border: none;
+}
+</style>

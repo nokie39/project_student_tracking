@@ -25,6 +25,10 @@ import StudentDashboard from '../views/student/Dashboard.vue'
 import TeacherMonitor from '../views/head/TeacherMonitor.vue'
 import Reports from '../views/head/Reports.vue'
 
+// --- Teacher Views 
+import TeacherLayout from '../layouts/TeacherLayout.vue';
+import TeacherDashboard from '../views/teacher/TeacherDashboard.vue';
+
 // --- Parent Views (✅ ເພີ່ມໃໝ່) ---
 const ParentSelectChild = () => import('../views/parent/SelectChild.vue')
 const ParentDashboard = () => import('../views/parent/ParentDashboard.vue')
@@ -72,6 +76,19 @@ const routes = [
       { path: 'grades', name: 'AdminGrades', component: Grades },
       { path: 'behavior', name: 'AdminBehavior', component: BehaviorEntry },
       { path: 'lms', name: 'AdminLMS', component: LMS },
+    ]
+  },
+
+  {
+    path: '/teacher',
+    component: TeacherLayout, // ✅ ໃຊ້ Layout ໃໝ່ທີ່ສ້າງຂຶ້ນ
+    meta: { requiresAuth: true, roles: ['teacher'] },
+    children: [
+      { 
+        path: 'dashboard', 
+        name: 'TeacherDashboard', 
+        component: TeacherDashboard 
+      },
     ]
   },
 

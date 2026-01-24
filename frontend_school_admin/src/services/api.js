@@ -1,3 +1,5 @@
+// src/services/api.js
+
 import axios from 'axios';
 
 // 1. ສ້າງ Instance ກ່ອນ (ປະກາດຕົວແປ api)
@@ -59,6 +61,9 @@ export const updateAcademicYear = (id, data) => api.put(`/academic/years/${id}`,
 export const deleteAcademicYear = (id) => api.delete(`/academic/years/${id}`);
 
 export const getClasses = () => api.get('/academic/classes');
+// ✅✅✅ ເພີ່ມແຖວນີ້ (Alias ສຳລັບ Teacher Dashboard) ✅✅✅
+export const getMyClasses = () => api.get('/academic/classes'); 
+
 export const createClass = (data) => api.post('/academic/classes', data);
 export const updateClass = (id, data) => api.put(`/academic/classes/${id}`, data);
 export const deleteClass = (id) => api.delete(`/academic/classes/${id}`);
@@ -86,7 +91,9 @@ export const updateGrade = (data) => api.post('/grades/update', data);
 export const getGradeAuditLogs = (studentId, monthId) => api.get(`/grades/logs/${studentId}/${monthId}`);
 
 // Behavior
-export const saveBehaviorLog = (data) => api.post('/behavior/add', data); 
+// ✅ ແກ້ໄຂ addBehaviorLog ໃຫ້ TeacherDashboard ໃຊ້ໄດ້
+export const addBehaviorLog = (data) => api.post('/students/behavior/', data); 
+export const saveBehaviorLog = addBehaviorLog; // Alias ໃຫ້ saveBehaviorLog ເກົ່າໃຊ້ໄດ້
 export const updateStudentTalents = (id, talents) => api.put(`/behavior/talents/${id}`, { talents });
 export const getStudentsForBehavior = (classId) => api.get(`/behavior/class/${classId}/students`);
 

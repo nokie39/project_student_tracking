@@ -200,21 +200,41 @@ class ScheduleResponse(BaseModel):
     subject_name: str
     teacher_name: Optional[str] = None
     day_of_week: str
-    start_time: str # ✅ ປ່ຽນເປັນ str ໃຫ້ກົງກັບ DB
-    end_time: str   # ✅ ປ່ຽນເປັນ str
+    start_time: str 
+    end_time: str   
     room: Optional[str] = None
     note: Optional[str] = None
     class Config:
         from_attributes = True
 
+# 🔥🔥 UPDATED ATTENDANCE SCHEMAS 🔥🔥
 class AttendanceItem(BaseModel):
     student_id: int
-    status: str 
+    status: str  # PRESENT, ABSENT, LATE, PERMISSION
+    remark: Optional[str] = None
 
-class AttendanceRequest(BaseModel):
+class AttendanceBatchRequest(BaseModel):
     class_id: int
-    date: str
+    date: date # ຮັບເປັນ YYYY-MM-DD
     students: List[AttendanceItem]
+
+class AttendanceLogView(BaseModel):
+    student_id: int
+    student_code: str
+    full_name: str
+    status: str = "PRESENT" # Default ໃຫ້ເປັນ "ມາ"
+    remark: Optional[str] = None
+    
+
+class AttendanceResponse(BaseModel):
+    id: int
+    student_id: int
+    class_id: int
+    date: date
+    status: str
+    remark: Optional[str] = None
+    class Config:
+        from_attributes = True
 
 class TeacherWorkStatus(BaseModel):
     teacher_id: int
@@ -240,7 +260,7 @@ class AssignmentCreate(BaseModel):
 class AssignmentResponse(AssignmentCreate):
     id: int
     created_at: datetime
-    class_name: Optional[str] = None # ເພີ່ມຊື່ຫ້ອງມາໂຊນຳ
+    class_name: Optional[str] = None 
 
     class Config:
         from_attributes = True
@@ -263,7 +283,7 @@ class StudentAssignmentResponse(AssignmentResponse):
     submission: Optional[SubmissionResponse] = None
 
 # ===========================
-# 👨‍👩‍👧‍👦 PARENTS & CHILDREN (✅ ເພີ່ມໃໝ່)
+# 👨‍👩‍👧‍👦 PARENTS & CHILDREN
 # ===========================
 
 class ChildSummary(BaseModel):
