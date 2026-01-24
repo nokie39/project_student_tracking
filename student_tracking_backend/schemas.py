@@ -143,6 +143,7 @@ class GradeUpdate(BaseModel):
     student_id: int
     class_id: int
     month_id: int
+    subject_name: str = "GENERAL"
     score_type: str  # "ATTENDANCE", "HOMEWORK", "MIDTERM", "FINAL"
     score_value: float
     reason: Optional[str] = None
@@ -154,6 +155,7 @@ class GradeLogResponse(BaseModel):
     updated_by: int
     updated_by_name: str = "Unknown"
     reason: Optional[str]
+    subject_name: Optional[str] = "General"
     updated_at: datetime
     class Config:
         from_attributes = True

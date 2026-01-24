@@ -44,6 +44,21 @@
             ></v-select>
           </v-col>
 
+          <v-col cols="12" md="4">
+            <v-select
+                v-model="selectedSubject"
+                :items="subjects"
+                item-title="title"
+                item-value="value"
+                label="ເລືອກວິຊາຮຽນ"
+                variant="outlined"
+                density="compact"
+                hide-details
+                prepend-inner-icon="mdi-book-open-page-variant"
+                @update:model-value="fetchData"
+            ></v-select>
+          </v-col>
+
           <v-col v-if="isLocked" cols="12" md="4">
             <v-alert type="warning" density="compact" variant="tonal" icon="mdi-alert" class="mb-0">
               ຂໍ້ມູນຖືກລັອກ ບໍ່ສາມາດແກ້ໄຂໄດ້.
@@ -178,6 +193,23 @@ const months = ref([
 const selectedMonth = ref(9); // Default ກັນຍາ
 const isLocked = ref(false);
 
+
+// ✅ NEW: Subject State & Options
+const selectedSubject = ref('GENERAL');
+const subjects = ref([
+    { title: 'ທົ່ວໄປ (General)', value: 'GENERAL' },
+    { title: 'ຄະນິດສາດ (Math)', value: 'MATH' },
+    { title: 'ພາສາລາວ (Lao)', value: 'LAO' },
+    { title: 'ພາສາອັງກິດ (English)', value: 'ENGLISH' },
+    { title: 'ຟີຊິກ (Physics)', value: 'PHYSICS' },
+    { title: 'ເຄມີ (Chemistry)', value: 'CHEMISTRY' },
+    { title: 'ຊີວະ (Biology)', value: 'BIOLOGY' },
+    { title: 'ປະຫວັດສາດ (History)', value: 'HISTORY' },
+    { title: 'ພູມສາດ (Geography)', value: 'GEOGRAPHY' },
+    { title: 'ສຶກສາພົນລະເມືອງ (Civics)', value: 'CIVICS' },
+    { title: 'ICT / ຄອມພິວເຕີ', value: 'ICT' },
+]);
+
 // States for Audit Log & Updates
 const reasonDialog = ref(false);
 const reasonText = ref('');
@@ -219,7 +251,8 @@ const fetchData = async () => {
 
   loading.value = true;
   try {
-    const res = await getClassGrades(selectedClass.value, selectedMonth.value);
+    // ✅ NEW: Pass selectedSubject to API
+    const res = await getClassGrades(selectedClass.value, selectedMonth.value, selectedSubject.value);
     students.value = res.data;
     // (Optional logic: ກວດສອບ lock ຈາກ API ຖ້າມີ)
     isLocked.value = false; 
@@ -240,6 +273,7 @@ const handleSave = async (item, type, newValue) => {
     student_id: item.student_id,
     class_id: selectedClass.value, // 🔥 ໃຊ້ຫ້ອງທີ່ເລືອກ
     month_id: selectedMonth.value,
+    subject_name: selectedSubject.value, // ✅ NEW: Include subject in payload
     score_type: type,
     score_value: val
   };

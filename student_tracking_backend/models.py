@@ -136,7 +136,7 @@ class Grade(Base):
     student_id = Column(Integer, ForeignKey("students.id"))
     class_id = Column(Integer, ForeignKey("classes.id"))
     month_id = Column(Integer) # 1=Sep, 2=Oct...
-    
+    subject_name = Column(String, default="GENERAL")
     attendance_score = Column(Float, default=0)
     homework_score = Column(Float, default=0)
     midterm_score = Column(Float, default=0)

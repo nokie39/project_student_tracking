@@ -1,36 +1,66 @@
-# fix_db.py
 import sqlite3
 
-# ເຊື່ອມຕໍ່ກັບຖານຂໍ້ມູນ
-conn = sqlite3.connect('student_tracking.db')
-cursor = conn.cursor()
+# ຊື່ໄຟລ໌ Database ຂອງທ່ານ
+DB_NAME = 'student_tracking.db'
 
-try:
-    print("Checking database schema...")
-    
-    # ດຶງລາຍຊື່ column ປະຈຸບັນ
-    cursor.execute("PRAGMA table_info(attendance)")
-    columns = [info[1] for info in cursor.fetchall()]
-    
-    # 1. ເພີ່ມ column 'period' ຖ້າຍັງບໍ່ມີ
-    if 'period' not in columns:
-        print("Adding 'period' column...")
-        cursor.execute("ALTER TABLE attendance ADD COLUMN period TEXT DEFAULT 'DAILY'")
-    else:
-        print("'period' column already exists.")
+def fix_database():
+    print(f"🔄 Connecting to {DB_NAME}...")
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
 
-    # 2. ເພີ່ມ column 'remark' ຖ້າຍັງບໍ່ມີ
-    if 'remark' not in columns:
-        print("Adding 'remark' column...")
-        cursor.execute("ALTER TABLE attendance ADD COLUMN remark TEXT")
-    else:
-        print("'remark' column already exists.")
+    try:
+        # ==========================================
+        # 1. ແກ້ໄຂຕາຕະລາງ ATTENDANCE (ເພີ່ມ period, remark)
+        # ==========================================
+        print("Checking 'attendance' table...")
+        cursor.execute("PRAGMA table_info(attendance)")
+        columns_att = [info[1] for info in cursor.fetchall()]
 
-    conn.commit()
-    print("✅ Database updated successfully!")
+        # ເພີ່ມ column 'period'
+        if 'period' not in columns_att:
+            print("  ➕ Adding 'period' column to attendance...")
+            cursor.execute("ALTER TABLE attendance ADD COLUMN period TEXT DEFAULT 'DAILY'")
+        else:
+            print("  ✅ 'period' column already exists.")
 
-except Exception as e:
-    print(f"❌ Error: {e}")
+        # ເພີ່ມ column 'remark'
+        if 'remark' not in columns_att:
+            print("  ➕ Adding 'remark' column to attendance...")
+            cursor.execute("ALTER TABLE attendance ADD COLUMN remark TEXT")
+        else:
+            print("  ✅ 'remark' column already exists.")
 
-finally:
-    conn.close()
+        # ==========================================
+        # 2. ແກ້ໄຂຕາຕະລາງ GRADES (ເພີ່ມ subject_name)
+        # ==========================================
+        print("\nChecking 'grades' table...")
+        # ກວດສອບກ່ອນວ່າຕາຕະລາງ grades ມີຫຼືບໍ່ (ກັນພາດ)
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='grades'")
+        if cursor.fetchone():
+            cursor.execute("PRAGMA table_info(grades)")
+            columns_grades = [info[1] for info in cursor.fetchall()]
+
+            # ເພີ່ມ column 'subject_name'
+            if 'subject_name' not in columns_grades:
+                print("  ➕ Adding 'subject_name' column to grades...")
+                cursor.execute("ALTER TABLE grades ADD COLUMN subject_name TEXT DEFAULT 'GENERAL'")
+            else:
+                print("  ✅ 'subject_name' column already exists.")
+        else:
+            print("  ⚠️ Table 'grades' not found! (Please run the server to create tables first)")
+
+        # ==========================================
+        # 3. Commit Changes
+        # ==========================================
+        conn.commit()
+        print("\n🎉 Database updated successfully!")
+
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        conn.rollback()
+
+    finally:
+        conn.close()
+
+if __name__ == "__main__":
+    fix_database()

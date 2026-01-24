@@ -1,17 +1,17 @@
-from database import SessionLocal, engine
-import models
-from datetime import time, datetime, timedelta
-
-# ==========================================
-# 0. SETUP DATABASE
-# ==========================================
-# ⚠️ ລຶບ Table ເກົ່າ ແລະ ສ້າງໃໝ່ (ເພື່ອໃຫ້ Table ໃໝ່ຢ່າງ Parents ເຮັດວຽກ)
-models.Base.metadata.drop_all(bind=engine)
-models.Base.metadata.create_all(bind=engine)
-db = SessionLocal()
+import models, database
+from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
 
 def seed_data():
-    print("🌱 Seeding data for OTP Auth System...")
+    db = database.SessionLocal()
+    print("🌱 Seeding data (OTP System)...")
+
+    # ==========================================
+    # 0. RESET DATABASE
+    # ==========================================
+    # ລຶບຕາຕະລາງເກົ່າ ແລະ ສ້າງໃໝ່ (ເພື່ອລ້າງຂໍ້ມູນເກົ່າທີ່ອາດມີບັນຫາ)
+    models.Base.metadata.drop_all(bind=database.engine)
+    models.Base.metadata.create_all(bind=database.engine)
 
     # ==========================================
     # 1. ACADEMIC STRUCTURE (ປີຮຽນ)
@@ -21,8 +21,14 @@ def seed_data():
     db.commit()
 
     # ==========================================
-    # 2. USERS (Teacher & Head)
+    # 2. USERS (Admin, Head, Teacher) - NO PASSWORD
     # ==========================================
+    admin_user = models.User(
+        email="admin@school.la", 
+        full_name="Admin User", 
+        role="admin"
+    )
+
     head_user = models.User(
         email="head@school.la", 
         full_name="Ajan Keo (Head)", 
@@ -35,7 +41,7 @@ def seed_data():
         role="teacher"
     )
 
-    db.add_all([head_user, teacher_user])
+    db.add_all([admin_user, head_user, teacher_user])
     db.commit()
 
     # ==========================================
@@ -53,11 +59,10 @@ def seed_data():
     # ==========================================
     # 4. SCHEDULES (ຕາຕະລາງຮຽນ)
     # ==========================================
-    # ⚠️ ໝາຍເຫດ: ໃສ່ day_of_week ເປັນພາສາອັງກິດ Monday, Tuesday...
     schedules_data = [
-        { "subject": "Mathematics", "teacher": "Ajan Somsak", "day": "Monday", "start": "08:00", "end": "09:30", "room": "A101", "note": "ກຽມເຄື່ອງຄິດເລກ" },
-        { "subject": "English", "teacher": "Ajan John", "day": "Tuesday", "start": "08:00", "end": "09:30", "room": "Lab 1", "note": "Quiz Chapter 1" },
-        { "subject": "Physics", "teacher": "Ajan Phone", "day": "Wednesday", "start": "10:00", "end": "11:30", "room": "Sci-2", "note": "" }
+        { "subject": "Mathematics", "teacher": "Ajan Somsak", "day": "Monday", "start": "08:00", "end": "09:30", "room": "A101" },
+        { "subject": "English", "teacher": "Ajan John", "day": "Tuesday", "start": "08:00", "end": "09:30", "room": "Lab 1" },
+        { "subject": "Physics", "teacher": "Ajan Phone", "day": "Wednesday", "start": "10:00", "end": "11:30", "room": "Sci-2" }
     ]
 
     for sch in schedules_data:
@@ -65,11 +70,10 @@ def seed_data():
             class_id=cls.id,
             subject_name=sch["subject"],
             teacher_name=sch["teacher"],
-            day_of_week=sch["day"], # ✅ ແກ້ເປັນ String: Monday
-            start_time=sch["start"], # ✅ ແກ້ເປັນ String: 08:00
+            day_of_week=sch["day"], 
+            start_time=sch["start"], 
             end_time=sch["end"],
-            room=sch["room"],
-            note=sch["note"]
+            room=sch["room"]
         )
         db.add(new_sch)
     db.commit()
@@ -82,7 +86,7 @@ def seed_data():
     assign1 = models.Assignment(
         title="Math Homework: Algebra",
         description="ຈົ່ງແກ້ສົມຜົນຂັ້ນສອງ ຂໍ້ 1-10 ໜ້າ 45",
-        file_url="https://example.com/math_worksheet.pdf",
+        file_url="https://example.com/math.pdf",
         due_date=datetime.utcnow() + timedelta(days=3),
         class_id=cls.id
     )
@@ -90,7 +94,6 @@ def seed_data():
     assign2 = models.Assignment(
         title="Lao Language: Essay",
         description="ຂຽນບົດພັນລະນາທຳມະຊາດ",
-        file_url="", # ບໍ່ມີໄຟລ໌
         due_date=datetime.utcnow() + timedelta(days=7),
         class_id=cls.id
     )
@@ -100,11 +103,11 @@ def seed_data():
     db.commit()
 
     # ==========================================
-    # 6. PARENTS (✅ ເພີ່ມໃໝ່)
+    # 6. PARENTS (User Role Only)
     # ==========================================
     print("   -> Creating Parent User...")
     
-    # 1. ສ້າງ User ສຳລັບ Login
+    # ສ້າງ User ຜູ້ປົກຄອງ (ບໍ່ມີ Password)
     parent_user = models.User(
         email="parent@school.la",
         full_name="Thao Bounmy (Parent)",
@@ -113,25 +116,17 @@ def seed_data():
     db.add(parent_user)
     db.commit()
 
-    # 2. ສ້າງ Profile ຜູ້ປົກຄອງ
-    parent_profile = models.Parent(
-        user_id=parent_user.id,
-        phone_number="020 99998888"
-    )
-    db.add(parent_profile)
-    db.commit()
-
-
     # ==========================================
-    # 7. STUDENTS & SUBMISSIONS
+    # 7. STUDENTS & DATA
     # ==========================================
     students_list = [
         { "email": "std1@school.la", "name": "Khamla Sithavong", "code": "S001", "blood": "O", "talent": "ແຕ້ມຮູບ", "village": "Naxay" },
-        { "email": "std2@school.la", "name": "Somsy Keo", "code": "S002", "blood": "A", "talent": "ຮ້ອງເພງ", "village": "Sonsai" }
+        { "email": "std2@school.la", "name": "Somsy Keo", "code": "S002", "blood": "A", "talent": "ຮ້ອງເພງ", "village": "Sonsai" },
+        { "email": "std3@school.la", "name": "Vong Vongsa", "code": "S003", "blood": "B", "talent": "ເຕະບານ", "village": "Thongkhankham" }
     ]
 
     for s in students_list:
-        # 1. ສ້າງ User (ສຳລັບ Login OTP)
+        # 1. ສ້າງ User ນັກຮຽນ (ບໍ່ມີ Password)
         user = models.User(
             email=s["email"], 
             full_name=s["name"], 
@@ -146,67 +141,57 @@ def seed_data():
             student_code=s["code"], 
             full_name=s["name"],
             
-            # ✅ ເຊື່ອມໂຍງກັບ Parent ທີ່ສ້າງໄວ້ຂ້າງເທິງ
-            parent_id=parent_profile.id,
+            # ຂໍ້ມູນຜູ້ປົກຄອງ (Text ສຳລັບຕິດຕໍ່ດ່ວນ)
             parent_name=parent_user.full_name,
-            parent_phone=parent_profile.phone_number,
+            parent_phone="020 99998888",
+            parent_email=parent_user.email,
 
-            date_of_birth="2010-05-15",
             blood_type=s["blood"],
             talents=s["talent"],
-            village=s["village"],
-            district="Xaysettha",
-            province="Vientiane"
+            village=s["village"]
         )
+        
+        # ✅ ເຊື່ອມໂຍງຜູ້ປົກຄອງເຂົ້າກັບນັກຮຽນ (Many-to-Many)
+        student.parents.append(parent_user)
+        
         db.add(student)
         db.commit()
 
         # 3. ລົງທະບຽນເຂົ້າຫ້ອງ
         enroll = models.Enrollment(student_id=student.id, class_id=cls.id)
         db.add(enroll)
-        db.commit()
 
-        # 4. ຂໍ້ມູນສະເພາະ S001 (Behavior + Submission)
-        if s["code"] == "S001":
-            # 4.1 ບັນທຶກພຶດຕິກຳ
-            logs = [
-                models.BehaviorLog(
-                    student_id=student.id, teacher_id=teacher_user.id, 
-                    type="POSITIVE", title="Good Helper", 
-                    description="Helped clean the room", points=10
-                ),
-                models.BehaviorLog(
-                    student_id=student.id, teacher_id=teacher_user.id, 
-                    type="NEGATIVE", title="Late", 
-                    description="Arrived late 15 mins", points=-5
-                )
-            ]
-            db.add_all(logs)
+        # 4. ສ້າງຄະແນນຕົວຢ່າງ (✅ ແຍກວິຊາ subject_name)
+        db.add(models.Grade(
+            student_id=student.id, class_id=cls.id, month_id=9, 
+            subject_name="GENERAL", # ວິຊາລວມ
+            attendance_score=10, homework_score=15, midterm_score=20, final_score=30
+        ))
+        db.add(models.Grade(
+            student_id=student.id, class_id=cls.id, month_id=9, 
+            subject_name="MATH", # ວິຊາຄະນິດສາດ
+            attendance_score=8, homework_score=18, midterm_score=25, final_score=35
+        ))
 
-            # 4.2 ສ້າງຂໍ້ມູນການສົ່ງວຽກ (Submission)
-            submission = models.Submission(
-                assignment_id=assign1.id,
-                student_id=student.id,
-                file_url="https://example.com/homework_answer.jpg",
-                score=None, 
-                feedback=None
-            )
-            db.add(submission)
+        # 5. ສ້າງຂໍ້ມູນເຊັກຊື່ (✅ ແຍກ Period)
+        db.add(models.Attendance(
+            student_id=student.id, class_id=cls.id, date="2026-01-24",
+            status="PRESENT", period="DAILY"
+        ))
 
     db.commit()
-    print("✅ Seed Data Success!")
+    print("✅ Seed Data Success (OTP Mode)!")
     print("---------------------------------------")
-    print("Use these emails to request OTP:")
-    print(f"👉 Head Teacher: head@school.la")
-    print(f"👉 Teacher:      teacher@school.la")
-    print(f"👉 Student:      std1@school.la")
-    print(f"👉 Parent:       parent@school.la  (Has 2 children)")
+    print(f"👉 Admin:    admin@school.la")
+    print(f"👉 Head:     head@school.la")
+    print(f"👉 Teacher:  teacher@school.la")
+    print(f"👉 Student:  std1@school.la")
+    print(f"👉 Parent:   parent@school.la")
     print("---------------------------------------")
+    print("ℹ️ Note: Use OTP Login (Enter email -> Get OTP from Console -> Verify)")
 
 if __name__ == "__main__":
     try:
         seed_data()
     except Exception as e:
         print(f"⚠️ Error: {e}")
-    finally:
-        db.close()

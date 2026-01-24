@@ -88,7 +88,8 @@ export const getAttendance = (classId, date, period = 'DAILY') =>
 export const saveAttendance = (data) => api.post('/attendance/save', data);
 
 // Grades
-export const getClassGrades = (classId, monthId) => api.get(`/grades/view-class/${classId}/${monthId}`);
+export const getClassGrades = (classId, monthId, subjectName = 'GENERAL') => 
+    api.get(`/grades/view-class/${classId}/${monthId}?subject_name=${subjectName}`);
 export const updateGrade = (data) => api.post('/grades/update', data);
 export const getGradeAuditLogs = (studentId, monthId) => api.get(`/grades/logs/${studentId}/${monthId}`);
 
