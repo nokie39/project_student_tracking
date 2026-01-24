@@ -200,6 +200,10 @@ class Attendance(Base):
     date = Column(String) # "YYYY-MM-DD"
     status = Column(String) # "PRESENT", "ABSENT", "LATE"
 
+    # ✅ ເພີ່ມ: ເກັບຄາບຮຽນ (ເຊັ່ນ: 1, 2, 3 ຫຼື ຊື່ວິຊາ)
+    period = Column(String, default="DAILY") 
+    remark = Column(String, nullable=True)
+
 # ==========================================
 # 7. TEACHER SUPERVISION
 # ==========================================

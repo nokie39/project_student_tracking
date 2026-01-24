@@ -5,16 +5,20 @@ import Login from '../views/Login.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import StudentLayout from '../layouts/StudentLayout.vue'
 import HeadLayout from '../layouts/HeadLayout.vue'
+import TeacherLayout from '../layouts/TeacherLayout.vue' // ✅ Layout ໃໝ່ສຳລັບຄູ
 
-// --- Admin / Teacher Views ---
+// --- Admin / Shared Views ---
 import Dashboard from '../views/admin/Dashboard.vue'
 import Students from '../views/admin/Students.vue'
 import Attendance from '../views/Attendance.vue' 
 import Grades from '../views/Grades.vue'
 import LMS from '../views/LMS.vue'
 import ScheduleAdmin from '../views/ScheduleAdmin.vue'
-import BehaviorEntry from '../views/teacher/BehaviorEntry.vue'
 import StudentDetail from '../views/student/StudentDetail.vue' 
+
+// --- Teacher Specific Views ---
+import TeacherDashboard from '../views/teacher/TeacherDashboard.vue'
+import BehaviorEntry from '../views/teacher/BehaviorEntry.vue'
 
 // --- Student Side Views ---
 import MyAssignments from '../views/student/MyAssignments.vue'
@@ -25,11 +29,7 @@ import StudentDashboard from '../views/student/Dashboard.vue'
 import TeacherMonitor from '../views/head/TeacherMonitor.vue'
 import Reports from '../views/head/Reports.vue'
 
-// --- Teacher Views 
-import TeacherLayout from '../layouts/TeacherLayout.vue';
-import TeacherDashboard from '../views/teacher/TeacherDashboard.vue';
-
-// --- Parent Views (✅ ເພີ່ມໃໝ່) ---
+// --- Parent Views ---
 const ParentSelectChild = () => import('../views/parent/SelectChild.vue')
 const ParentDashboard = () => import('../views/parent/ParentDashboard.vue')
 
@@ -38,40 +38,39 @@ const routes = [
   { path: '/login', component: Login, name: 'Login' },
   { path: '/', redirect: '/login' },
 
-  // 1. ທາງຂອງ Admin / Teacher
+  // ==========================================
+  // 1. ADMIN ROUTES (MainLayout)
+  // ==========================================
   { 
     path: '/admin',
     component: MainLayout, 
-    meta: { requiresAuth: true, roles: ['admin', 'teacher'] },
+    meta: { requiresAuth: true, roles: ['admin'] }, 
     children: [
       { path: 'dashboard', name: 'AdminDashboard', component: Dashboard },
       
-      // ຈັດການຂໍ້ມູນພື້ນຖານ (Admin Only)
+      // ຈັດການຂໍ້ມູນພື້ນຖານ
       { 
         path: 'years', 
         name: 'AcademicYears', 
-        component: () => import('../views/admin/AcademicYears.vue'),
-        meta: { roles: ['admin'] } 
+        component: () => import('../views/admin/AcademicYears.vue')
       },
       { 
         path: 'classes', 
         name: 'AdminClasses', 
-        component: () => import('../views/admin/Classes.vue'),
-        meta: { roles: ['admin'] } 
+        component: () => import('../views/admin/Classes.vue')
       },
       { 
         path: 'users', 
         name: 'AdminUsers', 
-        component: () => import('../views/admin/Users.vue'), 
-        meta: { roles: ['admin'] } 
+        component: () => import('../views/admin/Users.vue')
       },
 
-      // ຈັດການການຮຽນການສອນ (Admin & Teacher)
+      // ຈັດການນັກຮຽນ & ວິຊາການ
       { path: 'students', name: 'AdminStudents', component: Students },
-      { path: 'student-detail/:id', name: 'StudentDetail', component: StudentDetail },
-      
+      { path: 'student-detail/:id', name: 'StudentDetailAdmin', component: StudentDetail },
       { path: 'academic', name: 'AdminAcademic', component: ScheduleAdmin },
       
+      // Admin ເບິ່ງໄດ້ທຸກຢ່າງ
       { path: 'attendance', name: 'AdminAttendance', component: Attendance },
       { path: 'grades', name: 'AdminGrades', component: Grades },
       { path: 'behavior', name: 'AdminBehavior', component: BehaviorEntry },
@@ -79,9 +78,12 @@ const routes = [
     ]
   },
 
+  // ==========================================
+  // 2. TEACHER ROUTES (TeacherLayout)
+  // ==========================================
   {
     path: '/teacher',
-    component: TeacherLayout, // ✅ ໃຊ້ Layout ໃໝ່ທີ່ສ້າງຂຶ້ນ
+    component: TeacherLayout,
     meta: { requiresAuth: true, roles: ['teacher'] },
     children: [
       { 
@@ -89,10 +91,21 @@ const routes = [
         name: 'TeacherDashboard', 
         component: TeacherDashboard 
       },
+      // ✅✅✅ ແກ້ໄຂຊື່ Route (name) ບໍ່ໃຫ້ຊ້ຳກັນກັບ Admin ✅✅✅
+      { path: 'students', name: 'TeacherStudents', component: Students },
+      { path: 'student-detail/:id', name: 'TeacherStudentDetail', component: StudentDetail },
+      { path: 'academic', name: 'TeacherAcademic', component: ScheduleAdmin },
+      
+      { path: 'attendance', name: 'TeacherAttendance', component: Attendance },
+      { path: 'grades', name: 'TeacherGrades', component: Grades },
+      { path: 'behavior', name: 'TeacherBehavior', component: BehaviorEntry },
+      { path: 'lms', name: 'TeacherLMS', component: LMS },
     ]
   },
 
-  // 2. ທາງຂອງ Head Teacher
+  // ==========================================
+  // 3. HEAD TEACHER ROUTES
+  // ==========================================
   {
     path: '/head',
     component: HeadLayout,
@@ -105,7 +118,9 @@ const routes = [
     ]
   },
 
-  // 3. ທາງຂອງ Student
+  // ==========================================
+  // 4. STUDENT ROUTES
+  // ==========================================
   {
     path: '/student',
     component: StudentLayout,
@@ -121,25 +136,26 @@ const routes = [
         component: () => import('../views/student/Profile.vue') 
       },
       { 
-      path: 'grades', 
-      name: 'StudentGrades', 
-      component: () => import('../views/student/MyGrades.vue') 
-    },
+        path: 'grades', 
+        name: 'StudentGrades', 
+        component: () => import('../views/student/MyGrades.vue') 
+      },
     ]
   },
 
-  // 4. ທາງຂອງ Parent (✅ ເພີ່ມໃໝ່)
+  // ==========================================
+  // 5. PARENT ROUTES
+  // ==========================================
   {
     path: '/parent',
-    // ໃຊ້ StudentLayout ເພື່ອໃຫ້ຮອງຮັບ Mobile View (ແຕ່ຕ້ອງເຊື່ອງ Nav ບາງອັນໃນ Layout ເອົາ)
-    component: StudentLayout, 
+    component: StudentLayout,
     meta: { requiresAuth: true, roles: ['parent'] },
     children: [
       { 
         path: 'select-child', 
         name: 'ParentSelectChild', 
         component: ParentSelectChild,
-        meta: { hideNavbar: true } // ສຳລັບເຊື່ອງ Navbar ໃນໜ້າເລືອກລູກ
+        meta: { hideNavbar: true }
       },
       { 
         path: 'dashboard/:studentId', 
@@ -159,7 +175,7 @@ const routes = [
     ]
   },
 
-  // Catch-all route
+  // Catch-all
   { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 
@@ -173,25 +189,23 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('role');
 
-  // 1. ກວດສອບ Auth
   if (to.meta.requiresAuth && !token) {
     return next('/login');
   }
 
-  // 2. ຖ້າ Login ແລ້ວແຕ່ຈະໄປໜ້າ Login ຄືນ -> ເຕະໄປ Dashboard ຕາມ Role
   if (to.path === '/login' && token) {
     if (userRole === 'student') return next('/student/dashboard');
+    if (userRole === 'teacher') return next('/teacher/dashboard');
     if (userRole === 'head_teacher') return next('/head/monitor');
-    if (userRole === 'parent') return next('/parent/select-child'); // ✅ Parent ໄປໜ້າເລືອກລູກ
+    if (userRole === 'parent') return next('/parent/select-child');
     return next('/admin/dashboard');
   }
 
-  // 3. ກວດສອບ Role-based Access
   if (to.meta.roles && !to.meta.roles.includes(userRole)) {
-    // ຖ້າສິດບໍ່ເຖິງ ໃຫ້ສົ່ງໄປໜ້າ Dashboard ຂອງ Role ຕົນເອງ
     if (userRole === 'student') return next('/student/dashboard');
+    if (userRole === 'teacher') return next('/teacher/dashboard');
     if (userRole === 'head_teacher') return next('/head/monitor');
-    if (userRole === 'parent') return next('/parent/select-child'); // ✅
+    if (userRole === 'parent') return next('/parent/select-child');
     return next('/admin/dashboard');
   }
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import date
@@ -13,6 +13,7 @@ router = APIRouter(prefix="/attendance", tags=["Attendance"])
 def get_class_attendance(
     class_id: int,
     date_str: date, # format: YYYY-MM-DD
+    period: str = Query(default="DAILY"), # ✅ ເພີ່ມ: ຮັບຄ່າ Period (ຖ້າບໍ່ສົ່ງມາຈະເປັນ DAILY)
     db: Session = Depends(database.get_db),
     current_user: dict = Depends(auth.get_current_user)
 ):
@@ -29,10 +30,11 @@ def get_class_attendance(
         .filter(models.Enrollment.class_id == class_id)\
         .all()
 
-    # 2. ດຶງຂໍ້ມູນການເຊັກຊື່ຂອງມື້ນັ້ນ (ຖ້າມີ)
+    # 2. ດຶງຂໍ້ມູນການເຊັກຊື່ຂອງມື້ນັ້ນ + ຕາມ Period ນັ້ນໆ (ຖ້າມີ)
     attendance_records = db.query(models.Attendance).filter(
         models.Attendance.class_id == class_id,
-        models.Attendance.date == date_str
+        models.Attendance.date == date_str,
+        models.Attendance.period == period # ✅ ເພີ່ມ: ກອງຕາມ Period
     ).all()
 
     # ສ້າງ Dictionary ເພື່ອໃຫ້ຄົ້ນຫາໄວຂຶ້ນ { student_id: record }
@@ -61,17 +63,19 @@ def get_class_attendance(
 # ==========================================
 @router.post("/save", status_code=status.HTTP_200_OK)
 def save_attendance_batch(
-    data: schemas.AttendanceBatchRequest, # ✅ ໃຊ້ Schema ທີ່ຖືກຕ້ອງ
+    data: schemas.AttendanceBatchRequest,
     db: Session = Depends(database.get_db),
     current_user: dict = Depends(auth.get_current_user)
 ):
     if current_user['role'] not in ['teacher', 'admin', 'head_teacher']:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    # 1. ລຶບຂໍ້ມູນເກົ່າຂອງວັນນັ້ນອອກກ່ອນ (Update ແບບລ້າງແລ້ວສ້າງໃໝ່)
+    # 1. ລຶບຂໍ້ມູນເກົ່າຂອງວັນນັ້ນ + Period ນັ້ນ ອອກກ່ອນ (Update ແບບລ້າງແລ້ວສ້າງໃໝ່)
+    # ⚠️ ຕ້ອງລະບຸ period ດ້ວຍ ບໍ່ດັ່ງນັ້ນມັນຈະລຶບຂອງວິຊາອື່ນໄປນຳ
     db.query(models.Attendance).filter(
         models.Attendance.class_id == data.class_id,
-        models.Attendance.date == data.date
+        models.Attendance.date == data.date,
+        models.Attendance.period == data.period # ✅ ເພີ່ມ: ລຶບສະເພາະ Period ນີ້
     ).delete()
     
     # 2. ສ້າງຂໍ້ມູນໃໝ່
@@ -80,6 +84,7 @@ def save_attendance_batch(
         new_records.append(models.Attendance(
             class_id=data.class_id,
             date=data.date,
+            period=data.period, # ✅ ເພີ່ມ: ບັນທຶກ Period
             student_id=item.student_id,
             status=item.status,
             remark=item.remark
@@ -88,4 +93,4 @@ def save_attendance_batch(
     db.add_all(new_records)
     db.commit()
     
-    return {"message": f"Saved {len(new_records)} records successfully"}
+    return {"message": f"Saved {len(new_records)} records successfully for period: {data.period}"}

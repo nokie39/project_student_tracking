@@ -81,8 +81,10 @@ export const deleteStudent = (id) => api.delete(`/students/${id}`);
 
 export const getMyGrades = () => api.get('/students/me/grades');
 
-// Attendance
-export const getAttendance = (classId, date) => api.get(`/attendance/class/${classId}?date_str=${date}`);
+// Attendance (✅ ແກ້ໄຂແຖວນີ້: ຮັບ parameter 'period')
+export const getAttendance = (classId, date, period = 'DAILY') => 
+  api.get(`/attendance/class/${classId}?date_str=${date}&period=${period}`);
+
 export const saveAttendance = (data) => api.post('/attendance/save', data);
 
 // Grades

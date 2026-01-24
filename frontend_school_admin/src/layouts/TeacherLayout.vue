@@ -1,11 +1,11 @@
 <template>
   <v-layout>
-    <v-navigation-drawer v-model="drawer" color="teal-darken-1" elevation="2">
+    <v-navigation-drawer v-model="drawer" color="teal-darken-1" elevation="2" class="border-none">
       <div class="d-flex flex-column align-center pa-6">
-        <v-avatar color="white" size="70" class="elevation-2">
-          <v-icon icon="mdi-account-tie" size="40" color="teal-darken-1"></v-icon>
+        <v-avatar color="white" size="70" class="elevation-3 mb-3">
+          <span class="text-h4 font-weight-bold text-teal-darken-1">{{ teacherInitial }}</span>
         </v-avatar>
-        <div class="text-white mt-3 font-weight-bold text-h6">Teacher Portal</div>
+        <div class="text-white font-weight-bold text-h6">Teacher Portal</div>
         <div class="text-teal-lighten-4 text-caption">{{ teacherName }}</div>
       </div>
 
@@ -29,7 +29,7 @@
 
       <template v-slot:append>
         <div class="pa-4">
-          <v-btn block color="red-lighten-4" class="text-red-darken-4" variant="flat" @click="logout">
+          <v-btn block color="white" variant="outlined" class="text-white" @click="logout">
             <v-icon start>mdi-logout</v-icon>
             ອອກຈາກລະບົບ
           </v-btn>
@@ -45,20 +45,10 @@
       </v-app-bar-title>
 
       <template v-slot:append>
-        <v-menu>
-          <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" icon>
-              <v-avatar color="teal-lighten-5" size="36">
-                <span class="text-teal font-weight-bold">{{ teacherInitial }}</span>
-              </v-avatar>
-            </v-btn>
-          </template>
-          <v-list width="200" density="compact" class="rounded-lg elevation-4">
-            <v-list-item prepend-icon="mdi-account-circle" title="ໂປຣໄຟລ໌"></v-list-item>
-            <v-divider></v-divider>
-            <v-list-item prepend-icon="mdi-logout" title="ອອກຈາກລະບົບ" @click="logout" class="text-error"></v-list-item>
-          </v-list>
-        </v-menu>
+        <v-chip color="teal" variant="flat" size="small" class="mr-4">
+          <v-icon start icon="mdi-account-tie"></v-icon>
+          Teacher
+        </v-chip>
       </template>
     </v-app-bar>
 
@@ -89,11 +79,11 @@ const teacherInitial = computed(() => teacherName.charAt(0).toUpperCase());
 // ✅ Teacher Specific Menu
 const teacherMenus = [
   { title: 'Dashboard', icon: 'mdi-view-dashboard-outline', path: '/teacher/dashboard' },
-  // { title: 'ຕາຕະລາງສອນ', icon: 'mdi-calendar-clock', path: '/teacher/schedule' }, // Future feature
-  // { title: 'ຈັດການນັກຮຽນ', icon: 'mdi-account-school-outline', path: '/teacher/students' }, // Usually inside Dashboard now
-  // { title: 'ເຊັກຊື່', icon: 'mdi-calendar-check', path: '/teacher/attendance' }, // Moved to Dashboard tabs
-  // { title: 'ຄະແນນ & ເກຣດ', icon: 'mdi-clipboard-text-outline', path: '/teacher/grades' }, // Future feature
-  // { title: 'ວຽກບ້ານ (LMS)', icon: 'mdi-book-open-page-variant-outline', path: '/teacher/lms' }, // Future feature
+  { title: 'ຕາຕະລາງສອນ', icon: 'mdi-calendar-clock', path: '/teacher/schedule' }, // Future feature
+  { title: 'ຈັດການນັກຮຽນ', icon: 'mdi-account-school-outline', path: '/teacher/students' }, // Usually inside Dashboard now
+  { title: 'ເຊັກຊື່', icon: 'mdi-calendar-check', path: '/teacher/attendance' }, // Moved to Dashboard tabs
+  { title: 'ຄະແນນ & ເກຣດ', icon: 'mdi-clipboard-text-outline', path: '/teacher/grades' }, // Future feature
+  { title: 'ວຽກບ້ານ (LMS)', icon: 'mdi-book-open-page-variant-outline', path: '/teacher/lms' }, // Future feature
 ];
 
 // Determine Current Page Title
@@ -111,7 +101,6 @@ const logout = () => {
 </script>
 
 <style scoped>
-/* Optional: Soft shadow for sidebar */
 .v-navigation-drawer {
   border: none;
 }

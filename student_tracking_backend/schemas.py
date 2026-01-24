@@ -216,6 +216,7 @@ class AttendanceItem(BaseModel):
 class AttendanceBatchRequest(BaseModel):
     class_id: int
     date: date # ຮັບເປັນ YYYY-MM-DD
+    period: str = "DAILY" # ✅ ເພີ່ມ Field ນີ້ (Default ແມ່ນລາຍວັນ)
     students: List[AttendanceItem]
 
 class AttendanceLogView(BaseModel):
@@ -225,13 +226,13 @@ class AttendanceLogView(BaseModel):
     status: str = "PRESENT" # Default ໃຫ້ເປັນ "ມາ"
     remark: Optional[str] = None
     
-
 class AttendanceResponse(BaseModel):
     id: int
     student_id: int
     class_id: int
     date: date
     status: str
+    period: str # ✅ ເພີ່ມໃຫ້ Frontend ເຫັນ
     remark: Optional[str] = None
     class Config:
         from_attributes = True
