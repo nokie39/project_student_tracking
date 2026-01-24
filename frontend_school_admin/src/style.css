@@ -1,0 +1,132 @@
+/* 1. Import Font (Noto Sans Lao) */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@100;200;300;400;500;600;700;800;900&family=Roboto:wght@100;300;400;500;700;900&display=swap');
+
+:root {
+  /* 2. Set Default Font & Variables */
+  font-family: 'Noto Sans Lao', 'Roboto', system-ui, -apple-system, sans-serif;
+  line-height: 1.6; /* ເພີ່ມໄລຍະຫ່າງແຖວໃຫ້ອ່ານງ່າຍ */
+  font-weight: 400;
+
+  /* Friendly Color Palette */
+  --bg-color: #F5F7FA;   /* ສີພື້ນຫຼັງເທົາອ່ອນ ສະບາຍຕາ */
+  --text-main: #2C3E50;  /* ສີຕົວໜັງສືເຂັ້ມແຕ່ບໍ່ດຳສະນິດ */
+  --text-muted: #64748B; /* ສີຕົວໜັງສືຈາງ */
+
+  color-scheme: light;
+  color: var(--text-main);
+  background-color: var(--bg-color);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 3. Force Vuetify Components to use Lao Font & Friendly Look
+body, .v-application, 
+.v-card, .v-btn, .v-list-item, .v-table, 
+.v-input, .v-chip, .v-list-item-title, .v-tooltip,
+.text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6,
+.text-body-1, .text-body-2, .text-caption {
+  font-family: 'Noto Sans Lao', 'Roboto', sans-serif !important;
+} */
+
+/* 🔥🔥🔥 3. THE FORCE RULE (ບັງຄັບປ່ຽນທຸກຢ່າງ) 🔥🔥🔥 */
+/* ໃຊ້ * ເພື່ອບັງຄັບທຸກ Element, ທຸກ Class, ທຸກ ID <<*::before, *::after, >> */
+html, body, #app, .v-application,
+*, 
+input, textarea, button, select, option,
+.v-btn, .v-card, .v-list-item, .v-tooltip {
+  font-family: 'Noto Sans Lao', 'Roboto', sans-serif !important;
+}
+
+
+/* 4. Global Layout Fixes */
+body {
+  margin: 0;
+  padding: 0;
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg-color); /* ບັງຄັບສີພື້ນຫຼັງ */
+  overflow-x: hidden;
+}
+
+#app {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+/* 5. Custom Scrollbar (Friendlier Look) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 6. Friendly Links */
+a {
+  font-weight: 600;
+  color: #3b82f6; /* Soft Blue */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+a:hover {
+  color: #1d4ed8;
+}
+
+/* 7. Softening Vuetify Defaults (Global Overrides) */
+
+/* ເຮັດໃຫ້ Card ມົນຂຶ້ນ ແລະ ເງົາອ່ອນລົງ */
+.v-card {
+  border-radius: 16px !important; /* ມົນຫຼາຍຂຶ້ນ */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* ປຸ່ມກົດມົນຂຶ້ນ */
+.v-btn {
+  border-radius: 10px !important;
+  text-transform: none !important; /* ບໍ່ໃຫ້ເປັນຕົວພິມໃຫຍ່ໝົດ */
+  letter-spacing: 0.5px !important;
+  font-weight: 600 !important;
+}
+
+/* Input Fields ມົນຂຶ້ນ */
+.v-field__outline {
+  --v-field-border-radius: 12px !important;
+}
+
+/* 8. Table Styling (ສະອາດຂຶ້ນ) */
+.v-table {
+  background-color: transparent !important;
+}
+.v-table th {
+  font-weight: 700 !important;
+  color: var(--text-muted) !important;
+  text-transform: uppercase;
+  font-size: 0.85rem !important;
+}
+
+/* 9. Utility Classes */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .v-container {
+    padding: 12px !important;
+  }
+}
