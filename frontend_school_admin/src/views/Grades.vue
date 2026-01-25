@@ -326,7 +326,6 @@ const viewLogs = (item) => {
   logsDialog.value = true;
 };
 
-// 🔥 3. ເອີ້ນໃຊ້ fetchClasses ເມື່ອໂຫຼດໜ້າ
 onMounted(fetchClasses);
 </script>
 
