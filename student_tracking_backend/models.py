@@ -10,6 +10,7 @@ from datetime import datetime
 
 # ຕາຕະລາງເຊື່ອມໂຍງ ຜູ້ປົກຄອງ <-> ນັກຮຽນ (Many-to-Many)
 # ເພາະ: ຜູ້ປົກຄອງ 1 ຄົນ ມີລູກໄດ້ຫຼາຍຄົນ / ນັກຮຽນ 1 ຄົນ ອາດມີຜູ້ປົກຄອງ 2 ຄົນ (ພໍ່+ແມ່)
+
 parent_student_link = Table(
     'parent_student_link',
     Base.metadata,
@@ -25,19 +26,26 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
     full_name = Column(String)
+    
+    # ❌ ລຶບ hashed_password ອອກ (ໃຊ້ OTP ລ້ວນ)
+    # hashed_password = Column(String, nullable=True) 
+
     role = Column(String) # admin, teacher, head_teacher, parent, student
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
-    student = relationship("Student", back_populates="user", uselist=False)
-    
-    # ✅ ສຳລັບຜູ້ປົກຄອງ: ເຊື່ອມຫາລູກຫຼາຍຄົນຜ່ານ Table ກາງ
+    student_profile = relationship("Student", back_populates="user", uselist=False)
     children = relationship(
         "Student",
         secondary=parent_student_link,
         back_populates="parents"
     )
+    
+    classes_teaching = relationship("Class", back_populates="teacher")
+    teachers_supervised = relationship("TeacherSupervision", foreign_keys="TeacherSupervision.head_teacher_id", back_populates="head_teacher")
+    supervisor_record = relationship("TeacherSupervision", foreign_keys="TeacherSupervision.teacher_id", back_populates="teacher")
+
 
 class OTPCode(Base):
     __tablename__ = "otp_codes"
@@ -53,22 +61,26 @@ class OTPCode(Base):
 class AcademicYear(Base):
     __tablename__ = "academic_years"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String) # e.g., "2025-2026"
+    name = Column(String)
     is_active = Column(Boolean, default=False)
-    
+
     classes = relationship("Class", back_populates="academic_year")
 
 class Class(Base):
     __tablename__ = "classes"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String) # e.g., "M.4/1"
+    name = Column(String)
     teacher_id = Column(Integer, ForeignKey("users.id"))
     year_id = Column(Integer, ForeignKey("academic_years.id"))
     
+    is_grade_locked = Column(Boolean, default=False)
+    
+    teacher = relationship("User", back_populates="classes_teaching")
     academic_year = relationship("AcademicYear", back_populates="classes")
     enrollments = relationship("Enrollment", back_populates="classroom")
     schedules = relationship("ClassSchedule", back_populates="classroom")
     assignments = relationship("Assignment", back_populates="classroom")
+    grades = relationship("Grade", back_populates="classroom")
 
 # ==========================================
 # 3. STUDENTS & ENROLLMENT
@@ -77,35 +89,26 @@ class Student(Base):
     __tablename__ = "students"
     id = Column(Integer, primary_key=True, index=True)
     student_code = Column(String, unique=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Login Account (ຖ້າມີ)
-
-    # --- ຂໍ້ມູນສ່ວນຕົວ ---
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     full_name = Column(String)
     date_of_birth = Column(String, nullable=True)
-    
-    # --- ຂໍ້ມູນຄອບຄົວ (ເກັບໄວ້ຕິດຕໍ່) ---
+
+ # --- ຂໍ້ມູນຄອບຄົວ (ເກັບໄວ້ຕິດຕໍ່) ---   
     parent_name = Column(String, nullable=True)
     parent_phone = Column(String, nullable=True)
-    parent_email = Column(String, nullable=True) # ✅ ເພີ່ມຕາມທີ່ທ່ານຂໍ
-    
-    # --- ຂໍ້ມູນສຸຂະພາບ ---
+    parent_email = Column(String, nullable=True)
     blood_type = Column(String, nullable=True)
     allergies = Column(Text, nullable=True)
     health_info = Column(Text, nullable=True)
-    
-    # --- ທີ່ຢູ່ ---
+  # --- ທີ່ຢູ່ ---   
     address = Column(String, nullable=True)
     village = Column(String, nullable=True)
     district = Column(String, nullable=True)
     province = Column(String, nullable=True)
-    
-    # --- ພອນສະຫວັນ ---
+ # --- ພອນສະຫວັນ ---   
     talents = Column(Text, nullable=True)
     
-    # Relationships
-    user = relationship("User", back_populates="student")
-    
-    # ✅ Relationship ກັບ Parent (Many-to-Many)
+    user = relationship("User", back_populates="student_profile")
     parents = relationship(
         "User",
         secondary=parent_student_link,
@@ -128,14 +131,14 @@ class Enrollment(Base):
     classroom = relationship("Class", back_populates="enrollments")
 
 # ==========================================
-# 4. GRADES (Core Grading System)
+# 4. GRADES
 # ==========================================
 class Grade(Base):
     __tablename__ = "grades"
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, ForeignKey("students.id"))
     class_id = Column(Integer, ForeignKey("classes.id"))
-    month_id = Column(Integer) # 1=Sep, 2=Oct...
+    month_id = Column(Integer)
     subject_name = Column(String, default="GENERAL")
     attendance_score = Column(Float, default=0)
     homework_score = Column(Float, default=0)
@@ -146,6 +149,8 @@ class Grade(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     student = relationship("Student", back_populates="grades")
+    classroom = relationship("Class", back_populates="grades")
+    audit_logs = relationship("GradeAuditLog", back_populates="grade")
 
 class GradeAuditLog(Base):
     __tablename__ = "grade_audit_logs"
@@ -156,9 +161,11 @@ class GradeAuditLog(Base):
     updated_by = Column(Integer, ForeignKey("users.id"))
     reason = Column(Text)
     updated_at = Column(DateTime, default=datetime.utcnow)
+    
+    grade = relationship("Grade", back_populates="audit_logs")
 
 # ==========================================
-# 5. BEHAVIOR & ACTIVITIES
+# 5. BEHAVIOR
 # ==========================================
 class BehaviorLog(Base):
     __tablename__ = "behavior_logs"
@@ -166,7 +173,7 @@ class BehaviorLog(Base):
     student_id = Column(Integer, ForeignKey("students.id"))
     teacher_id = Column(Integer, ForeignKey("users.id"))
     
-    type = Column(String) # POSITIVE / NEGATIVE
+    type = Column(String)
     title = Column(String)
     description = Column(Text, nullable=True)
     points = Column(Integer, default=0)
@@ -179,12 +186,12 @@ class BehaviorLog(Base):
 # 6. SCHEDULES & ATTENDANCE
 # ==========================================
 class ClassSchedule(Base):
-    __tablename__ = "class_schedules"
+    __tablename__ = "schedules"
     id = Column(Integer, primary_key=True, index=True)
     class_id = Column(Integer, ForeignKey("classes.id"))
     subject_name = Column(String)
     teacher_name = Column(String, nullable=True)
-    day_of_week = Column(String) # ✅ String (Monday, Tuesday...)
+    day_of_week = Column(String)
     start_time = Column(String) 
     end_time = Column(String)   
     room = Column(String)
@@ -197,10 +204,9 @@ class Attendance(Base):
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, ForeignKey("students.id"))
     class_id = Column(Integer, ForeignKey("classes.id"))
-    date = Column(String) # "YYYY-MM-DD"
-    status = Column(String) # "PRESENT", "ABSENT", "LATE"
-
-    # ✅ ເພີ່ມ: ເກັບຄາບຮຽນ (ເຊັ່ນ: 1, 2, 3 ຫຼື ຊື່ວິຊາ)
+    date = Column(String)
+    status = Column(String)
+#--- add period and memark
     period = Column(String, default="DAILY") 
     remark = Column(String, nullable=True)
 
@@ -208,10 +214,13 @@ class Attendance(Base):
 # 7. TEACHER SUPERVISION
 # ==========================================
 class TeacherSupervision(Base):
-    __tablename__ = "teacher_supervisions"
+    __tablename__ = "teacher_supervision"
     id = Column(Integer, primary_key=True, index=True)
     head_teacher_id = Column(Integer, ForeignKey("users.id"))
     teacher_id = Column(Integer, ForeignKey("users.id"))
+    
+    head_teacher = relationship("User", foreign_keys=[head_teacher_id], back_populates="teachers_supervised")
+    teacher = relationship("User", foreign_keys=[teacher_id], back_populates="supervisor_record")
 
 # ==========================================
 # 8. LMS & ASSIGNMENTS

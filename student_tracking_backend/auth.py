@@ -10,7 +10,7 @@ import database, models # <--- Import ເພີ່ມ (ເພື່ອດຶງ�
 # Secret Key
 SECRET_KEY = "mysecretkey_super_secure"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 
+# ACCESS_TOKEN_EXPIRE_MINUTES = 1440 #60 * 24 
 
 # ໃຊ້ HTTPBearer ເພື່ອໃຫ້ວາງ Token ໄດ້ງ່າຍໆ
 security = HTTPBearer()

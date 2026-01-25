@@ -74,14 +74,38 @@
 
           <template v-slot:item.actions="{ item }">
             <div class="d-flex gap-2 justify-end">
-              <v-tooltip text="ເບິ່ງປະຫວັດ" location="top">
+              
+              <v-menu location="bottom end">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    size="small"
+                    color="indigo"
+                    variant="tonal"
+                    icon="mdi-file-document-multiple-outline"
+                  ></v-btn>
+                </template>
+                <v-list density="compact">
+                  <v-list-subheader>ເລືອກລາຍງານ</v-list-subheader>
+                  
+                  <v-list-item @click="goToReport('detailed', item.id)" prepend-icon="mdi-history">
+                    <v-list-item-title>ປະຫວັດການຮຽນລະອຽດ</v-list-item-title>
+                  </v-list-item>
+
+                  <v-list-item @click="goToReport('transcript', item.id)" prepend-icon="mdi-file-certificate">
+                    <v-list-item-title>ໃບຢັ້ງຢືນຜົນການຮຽນ</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+
+              <v-tooltip text="ເບິ່ງປະຫວັດ/Portfolio" location="top">
                 <template v-slot:activator="{ props }">
                   <v-btn
                     v-bind="props"
                     size="small"
                     color="info"
                     variant="tonal"
-                    icon="mdi-file-account"
+                    icon="mdi-account-details"
                     @click="viewPortfolio(item.id)"
                   ></v-btn>
                 </template>
@@ -430,7 +454,36 @@ const save = async () => {
 };
 
 const viewPortfolio = (studentId) => {
-  router.push({ name: 'StudentDetail', params: { id: studentId } });
+  const role = localStorage.getItem('role');
+  let routeName = 'StudentDetailAdmin'; 
+
+  if (role === 'teacher') {
+    routeName = 'TeacherStudentDetail';
+  } else if (role === 'head_teacher') {
+    routeName = 'HeadStudentDetail';
+  }
+
+  router.push({ name: routeName, params: { id: studentId } });
+};
+
+// ✅ ຟັງຊັນໄປໜ້າ Report ຕ່າງໆ
+const goToReport = (type, studentId) => {
+  const role = localStorage.getItem('role');
+  let routeName = '';
+
+  if (type === 'detailed') {
+      if (role === 'admin') routeName = 'AdminDetailedReport';
+      else if (role === 'teacher') routeName = 'TeacherDetailedReport';
+      else if (role === 'head_teacher') routeName = 'HeadDetailedReport';
+  } else if (type === 'transcript') {
+      if (role === 'admin') routeName = 'AdminStudentTranscript';
+      else if (role === 'teacher') routeName = 'TeacherStudentTranscript';
+      else if (role === 'head_teacher') routeName = 'HeadStudentTranscript';
+  }
+
+  if (routeName) {
+      router.push({ name: routeName, params: { id: studentId } });
+  }
 };
 
 onMounted(init);

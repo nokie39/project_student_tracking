@@ -92,6 +92,14 @@ export const getClassGrades = (classId, monthId, subjectName = 'GENERAL') =>
     api.get(`/grades/view-class/${classId}/${monthId}?subject_name=${subjectName}`);
 export const updateGrade = (data) => api.post('/grades/update', data);
 export const getGradeAuditLogs = (studentId, monthId) => api.get(`/grades/logs/${studentId}/${monthId}`);
+export const getLockStatus = (classId) => api.get(`/grades/lock-status/${classId}`);
+export const toggleClassLock = (classId) => api.post(`/grades/lock-toggle/${classId}`);
+// ✅ ເພີ່ມຟັງຊັນດຶງບົດສະຫຼຸບ
+export const getSemesterSummary = (classId, semesterId) => 
+    api.get(`/reports/semester-summary/${classId}/${semesterId}`);
+
+export const getStudentDetailHistory = (studentId) => api.get(`/reports/student-detail-history/${studentId}`);
+export const getStudentTranscript = (studentId) => api.get(`/reports/student-transcript/${studentId}`);
 
 // Behavior
 // ✅ ແກ້ໄຂ addBehaviorLog ໃຫ້ TeacherDashboard ໃຊ້ໄດ້

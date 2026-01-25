@@ -5,7 +5,7 @@ import Login from '../views/Login.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import StudentLayout from '../layouts/StudentLayout.vue'
 import HeadLayout from '../layouts/HeadLayout.vue'
-import TeacherLayout from '../layouts/TeacherLayout.vue' // ✅ Layout ໃໝ່ສຳລັບຄູ
+import TeacherLayout from '../layouts/TeacherLayout.vue'
 
 // --- Admin / Shared Views ---
 import Dashboard from '../views/admin/Dashboard.vue'
@@ -15,6 +15,10 @@ import Grades from '../views/Grades.vue'
 import LMS from '../views/LMS.vue'
 import ScheduleAdmin from '../views/ScheduleAdmin.vue'
 import StudentDetail from '../views/student/StudentDetail.vue' 
+
+// --- Report Views (New) ---
+import SemesterReport from '../views/SemesterReport.vue'
+// Transcript and DetailedReport are lazy-loaded below
 
 // --- Teacher Specific Views ---
 import TeacherDashboard from '../views/teacher/TeacherDashboard.vue'
@@ -34,7 +38,7 @@ const ParentSelectChild = () => import('../views/parent/SelectChild.vue')
 const ParentDashboard = () => import('../views/parent/ParentDashboard.vue')
 
 const routes = [
-  // 0. ໜ້າ Login
+  // 0. Login
   { path: '/login', component: Login, name: 'Login' },
   { path: '/', redirect: '/login' },
 
@@ -48,7 +52,7 @@ const routes = [
     children: [
       { path: 'dashboard', name: 'AdminDashboard', component: Dashboard },
       
-      // ຈັດການຂໍ້ມູນພື້ນຖານ
+      // Basic Data
       { 
         path: 'years', 
         name: 'AcademicYears', 
@@ -65,16 +69,21 @@ const routes = [
         component: () => import('../views/admin/Users.vue')
       },
 
-      // ຈັດການນັກຮຽນ & ວິຊາການ
+      // Student & Academic
       { path: 'students', name: 'AdminStudents', component: Students },
       { path: 'student-detail/:id', name: 'StudentDetailAdmin', component: StudentDetail },
       { path: 'academic', name: 'AdminAcademic', component: ScheduleAdmin },
       
-      // Admin ເບິ່ງໄດ້ທຸກຢ່າງ
+      // Features
       { path: 'attendance', name: 'AdminAttendance', component: Attendance },
       { path: 'grades', name: 'AdminGrades', component: Grades },
       { path: 'behavior', name: 'AdminBehavior', component: BehaviorEntry },
       { path: 'lms', name: 'AdminLMS', component: LMS },
+      
+      // ✅ REPORTS (Semester, Transcript, Detailed)
+      { path: 'reports/semester', name: 'AdminSemesterReport', component: SemesterReport },
+      { path: 'transcript/:id', name: 'AdminStudentTranscript', component: () => import('../views/Transcript.vue') },
+      { path: 'detailed-report/:id', name: 'AdminDetailedReport', component: () => import('../views/DetailedReport.vue') },
     ]
   },
 
@@ -86,12 +95,8 @@ const routes = [
     component: TeacherLayout,
     meta: { requiresAuth: true, roles: ['teacher'] },
     children: [
-      { 
-        path: 'dashboard', 
-        name: 'TeacherDashboard', 
-        component: TeacherDashboard 
-      },
-      // ✅✅✅ ແກ້ໄຂຊື່ Route (name) ບໍ່ໃຫ້ຊ້ຳກັນກັບ Admin ✅✅✅
+      { path: 'dashboard', name: 'TeacherDashboard', component: TeacherDashboard },
+      
       { path: 'students', name: 'TeacherStudents', component: Students },
       { path: 'student-detail/:id', name: 'TeacherStudentDetail', component: StudentDetail },
       { path: 'academic', name: 'TeacherAcademic', component: ScheduleAdmin },
@@ -100,6 +105,11 @@ const routes = [
       { path: 'grades', name: 'TeacherGrades', component: Grades },
       { path: 'behavior', name: 'TeacherBehavior', component: BehaviorEntry },
       { path: 'lms', name: 'TeacherLMS', component: LMS },
+
+      // ✅ REPORTS
+      { path: 'reports/semester', name: 'TeacherSemesterReport', component: SemesterReport },
+      { path: 'transcript/:id', name: 'TeacherStudentTranscript', component: () => import('../views/Transcript.vue') },
+      { path: 'detailed-report/:id', name: 'TeacherDetailedReport', component: () => import('../views/DetailedReport.vue') },
     ]
   },
 
@@ -115,6 +125,11 @@ const routes = [
       { path: 'reports', name: 'HeadReports', component: Reports },
       { path: 'teachers', name: 'HeadTeachers', component: () => import('../views/head/TeachersList.vue') },
       { path: 'student-detail/:id', name: 'HeadStudentDetail', component: StudentDetail },
+      
+      // ✅ REPORTS
+      { path: 'reports/semester', name: 'HeadSemesterReport', component: SemesterReport },
+      { path: 'transcript/:id', name: 'HeadStudentTranscript', component: () => import('../views/Transcript.vue') },
+      { path: 'detailed-report/:id', name: 'HeadDetailedReport', component: () => import('../views/DetailedReport.vue') },
     ]
   },
 
@@ -140,6 +155,9 @@ const routes = [
         name: 'StudentGrades', 
         component: () => import('../views/student/MyGrades.vue') 
       },
+      // Student can view their own transcript/detailed report via Portfolio
+      { path: 'transcript/:id', name: 'StudentTranscript', component: () => import('../views/Transcript.vue') },
+      { path: 'detailed-report/:id', name: 'StudentDetailedReport', component: () => import('../views/DetailedReport.vue') },
     ]
   },
 
@@ -202,6 +220,7 @@ router.beforeEach((to, from, next) => {
   }
 
   if (to.meta.roles && !to.meta.roles.includes(userRole)) {
+    // Redirect to respective dashboard if unauthorized
     if (userRole === 'student') return next('/student/dashboard');
     if (userRole === 'teacher') return next('/teacher/dashboard');
     if (userRole === 'head_teacher') return next('/head/monitor');

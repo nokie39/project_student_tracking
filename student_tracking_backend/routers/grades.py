@@ -37,6 +37,44 @@ def validate_score(score_type: str, value: float):
         raise HTTPException(status_code=400, detail=f"ຄະແນນທ້າຍພາກ ຫ້າມເກີນ {MAX_SCORE_FINAL}")
 
 # ==========================================
+# 🔒 ADMIN MANUAL LOCK (ລະບົບລັອກໂດຍ Admin)
+# ==========================================
+
+# 1. API ສຳລັບ Admin ກົດ ລັອກ/ປົດລັອກ
+@router.post("/lock-toggle/{class_id}")
+def toggle_class_lock(
+    class_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: dict = Depends(auth.get_current_user)
+):
+    # ສະເພາະ Admin ຫຼື Head Teacher
+    if current_user['role'] not in ['admin', 'head_teacher']:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    cls = db.query(models.Class).filter(models.Class.id == class_id).first()
+    if not cls:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    # ສະລັບຄ່າ True <-> False
+    cls.is_grade_locked = not cls.is_grade_locked
+    db.commit()
+    
+    status_text = "LOCKED" if cls.is_grade_locked else "UNLOCKED"
+    return {"message": f"Class is now {status_text}", "is_locked": cls.is_grade_locked}
+
+# 2. API ກວດສອບສະຖານະການລັອກຂອງຫ້ອງ
+@router.get("/lock-status/{class_id}")
+def get_lock_status(
+    class_id: int,
+    db: Session = Depends(database.get_db)
+):
+    cls = db.query(models.Class).filter(models.Class.id == class_id).first()
+    if not cls:
+        return {"is_manual_locked": False}
+    return {"is_manual_locked": cls.is_grade_locked}
+
+
+# ==========================================
 # 1. ດຶງຄະແນນຫ້ອງຮຽນປະຈຳເດືອນ (View Class Grades)
 # ==========================================
 @router.get("/view-class/{class_id}/{month_id}")
