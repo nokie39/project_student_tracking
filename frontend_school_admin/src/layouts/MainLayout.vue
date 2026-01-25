@@ -82,15 +82,15 @@ const adminMenus = [
   
   // 1. ຈັດການຂໍ້ມູນຫຼັກ
   { title: 'ຈັດການປີການສຶກສາ', icon: 'mdi-calendar-range', path: '/admin/years' },
+  { title: 'ຈັດການຜູ້ໃຊ້', icon: 'mdi-account-cog-outline', path: '/admin/users' },
   { title: 'ຈັດການຫ້ອງຮຽນ', icon: 'mdi-google-classroom', path: '/admin/classes' },
-  { title: 'ຈັດການຜູ້ໃຊ້ (Users)', icon: 'mdi-account-cog-outline', path: '/admin/users' },
   { title: 'ຈັດການນັກຮຽນ', icon: 'mdi-account-school-outline', path: '/admin/students' },
 
   // 2. ຈັດການການຮຽນ-ການສອນ (Admin ກໍຄວນເຫັນ)
-  { title: 'ວິຊາການ (ຕາຕະລາງ)', icon: 'mdi-school-outline', path: '/admin/academic' },
+  { title: 'ຈັດຕາຕະລາງ', icon: 'mdi-calendar-import', path: '/admin/academic' },
   { title: 'ເຊັກຊື່ (Attendance)', icon: 'mdi-calendar-check-outline', path: '/admin/attendance' },
   { title: 'ຄະແນນ (Grades)', icon: 'mdi-clipboard-list-outline', path: '/admin/grades' },
-  { title: 'ພຶດຕິກຳ (Behavior)', icon: 'mdi-star-circle-outline', path: '/admin/behavior' },
+  //{ title: 'ພຶດຕິກຳ (Behavior)', icon: 'mdi-star-circle-outline', path: '/admin/behavior' },
   { title: 'ສັ່ງວຽກບ້ານ (LMS)', icon: 'mdi-book-open-variant-outline', path: '/admin/lms' },
 ];
 

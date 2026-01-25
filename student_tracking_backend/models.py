@@ -8,9 +8,6 @@ from datetime import datetime
 # 0. ASSOCIATION TABLES (Many-to-Many)
 # ==========================================
 
-# ຕາຕະລາງເຊື່ອມໂຍງ ຜູ້ປົກຄອງ <-> ນັກຮຽນ (Many-to-Many)
-# ເພາະ: ຜູ້ປົກຄອງ 1 ຄົນ ມີລູກໄດ້ຫຼາຍຄົນ / ນັກຮຽນ 1 ຄົນ ອາດມີຜູ້ປົກຄອງ 2 ຄົນ (ພໍ່+ແມ່)
-
 parent_student_link = Table(
     'parent_student_link',
     Base.metadata,
@@ -27,9 +24,6 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     full_name = Column(String)
     
-    # ❌ ລຶບ hashed_password ອອກ (ໃຊ້ OTP ລ້ວນ)
-    # hashed_password = Column(String, nullable=True) 
-
     role = Column(String) # admin, teacher, head_teacher, parent, student
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -78,7 +72,7 @@ class Class(Base):
     teacher = relationship("User", back_populates="classes_teaching")
     academic_year = relationship("AcademicYear", back_populates="classes")
     enrollments = relationship("Enrollment", back_populates="classroom")
-    schedules = relationship("ClassSchedule", back_populates="classroom")
+    schedules = relationship("Schedule", back_populates="classroom")
     assignments = relationship("Assignment", back_populates="classroom")
     grades = relationship("Grade", back_populates="classroom")
 
@@ -93,19 +87,21 @@ class Student(Base):
     full_name = Column(String)
     date_of_birth = Column(String, nullable=True)
 
- # --- ຂໍ້ມູນຄອບຄົວ (ເກັບໄວ້ຕິດຕໍ່) ---   
+    # --- ຂໍ້ມູນຄອບຄົວ ---    
     parent_name = Column(String, nullable=True)
     parent_phone = Column(String, nullable=True)
     parent_email = Column(String, nullable=True)
     blood_type = Column(String, nullable=True)
     allergies = Column(Text, nullable=True)
     health_info = Column(Text, nullable=True)
-  # --- ທີ່ຢູ່ ---   
+    
+    # --- ທີ່ຢູ່ ---    
     address = Column(String, nullable=True)
     village = Column(String, nullable=True)
     district = Column(String, nullable=True)
     province = Column(String, nullable=True)
- # --- ພອນສະຫວັນ ---   
+    
+    # --- ພອນສະຫວັນ ---    
     talents = Column(Text, nullable=True)
     
     user = relationship("User", back_populates="student_profile")
@@ -118,6 +114,8 @@ class Student(Base):
     enrollments = relationship("Enrollment", back_populates="student")
     grades = relationship("Grade", back_populates="student")
     behavior_logs = relationship("BehaviorLog", back_populates="student")
+    
+    # ✅ (1) ທີ່ Class Student ຕັ້ງຊື່ວ່າ "submissions"
     submissions = relationship("Submission", back_populates="student")
 
 class Enrollment(Base):
@@ -185,10 +183,12 @@ class BehaviorLog(Base):
 # ==========================================
 # 6. SCHEDULES & ATTENDANCE
 # ==========================================
-class ClassSchedule(Base):
+class Schedule(Base):
     __tablename__ = "schedules"
     id = Column(Integer, primary_key=True, index=True)
     class_id = Column(Integer, ForeignKey("classes.id"))
+    semester_id = Column(Integer, default=1)
+    
     subject_name = Column(String)
     teacher_name = Column(String, nullable=True)
     day_of_week = Column(String)
@@ -206,7 +206,6 @@ class Attendance(Base):
     class_id = Column(Integer, ForeignKey("classes.id"))
     date = Column(String)
     status = Column(String)
-#--- add period and memark
     period = Column(String, default="DAILY") 
     remark = Column(String, nullable=True)
 
@@ -250,4 +249,6 @@ class Submission(Base):
     submitted_at = Column(DateTime, default=datetime.utcnow)
     
     assignment = relationship("Assignment", back_populates="submissions")
+    
+    # ✅ (2) ແກ້ໄຂ back_populates ໃຫ້ເປັນ "submissions" (ໃຫ້ກົງກັບທີ່ປະກາດໃນ class Student)
     student = relationship("Student", back_populates="submissions")

@@ -202,7 +202,7 @@ def get_submissions_by_assignment(
         status = "MISSING"
         if sub:
             status = "SUBMITTED"
-        elif assignment.due_date < datetime.now():
+        elif assignment.due_date and assignment.due_date < datetime.now():
             status = "LATE"
         
         # ຫາຊື່ (Logic ປ້ອງກັນຊື່ວ່າງ)
@@ -265,56 +265,6 @@ def get_teacher_classes(
         query = query.filter(models.Class.teacher_id == current_user['id'])
         
     return query.all()
-
-# ==========================================
-# 8. SCHEDULES (ຈັດການຕາຕະລາງຮຽນ)
-# ==========================================
-@router.get("/schedules/{class_id}")
-def get_class_schedules(class_id: int, db: Session = Depends(database.get_db)):
-    return db.query(models.ClassSchedule)\
-        .filter(models.ClassSchedule.class_id == class_id)\
-        .order_by(models.ClassSchedule.day_of_week, models.ClassSchedule.start_time)\
-        .all()
-
-@router.post("/schedules")
-def create_class_schedule(
-    schedule: schemas.ScheduleCreate, 
-    db: Session = Depends(database.get_db),
-    current_user: dict = Depends(auth.get_current_user)
-):
-    if current_user['role'] not in ['teacher', 'admin']:
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    new_schedule = models.ClassSchedule(
-        class_id=schedule.class_id,
-        subject_name=schedule.subject_name,
-        teacher_name=schedule.teacher_name,
-        day_of_week=schedule.day_of_week,
-        start_time=schedule.start_time,
-        end_time=schedule.end_time,
-        room=schedule.room,
-        note=schedule.note
-    )
-    db.add(new_schedule)
-    db.commit()
-    return {"message": "Schedule created"}
-
-@router.delete("/schedules/{id}")
-def delete_class_schedule(
-    id: int,
-    db: Session = Depends(database.get_db),
-    current_user: dict = Depends(auth.get_current_user)
-):
-    if current_user['role'] not in ['teacher', 'admin']:
-        raise HTTPException(status_code=403, detail="Not authorized")
-        
-    item = db.query(models.ClassSchedule).filter(models.ClassSchedule.id == id).first()
-    if not item:
-        raise HTTPException(status_code=404, detail="Schedule not found")
-        
-    db.delete(item)
-    db.commit()
-    return {"message": "Deleted successfully"}
 
 # ==========================================
 # 9. STUDENT: ດຶງວຽກບ້ານຂອງຂ້ອຍ (ພ້ອມສະຖານະ)

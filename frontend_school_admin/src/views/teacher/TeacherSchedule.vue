@@ -4,23 +4,15 @@
       <v-card-title class="d-flex flex-wrap justify-space-between align-center py-4 px-4 bg-teal-darken-1 text-white print-hide">
         <div class="text-h6 d-flex align-center">
           <v-icon icon="mdi-calendar-clock" start></v-icon>
-          ຈັດການຕາຕະລາງຮຽນ (Academic Schedule)
+          ຕາຕະລາງການຮຽນ-ການສອນ
         </div>
-        <v-btn 
-            color="white" 
-            variant="elevated" 
-            class="text-teal-darken-2 font-weight-bold" 
-            prepend-icon="mdi-printer" 
-            @click="printSchedule" 
-            :disabled="!selectedClass"
-        >
+        <v-btn color="white" variant="elevated" class="text-teal-darken-2 font-weight-bold" prepend-icon="mdi-printer" @click="printSchedule" :disabled="!selectedClass">
             ພິມຕາຕະລາງ
         </v-btn>
       </v-card-title>
 
       <v-card-text class="mt-4">
         <v-row align="center" class="mb-4 print-hide">
-          
           <v-col cols="12" md="4">
             <v-select
               v-model="selectedClass"
@@ -34,6 +26,7 @@
               hide-details
               @update:model-value="fetchSchedule"
               class="rounded-lg"
+              no-data-text="ທ່ານຍັງບໍ່ມີຫ້ອງຮຽນທີ່ຮັບຜິດຊອບ"
             ></v-select>
           </v-col>
 
@@ -110,24 +103,12 @@
                     </div>
                 </template>
             </div>
-
+            
             <div class="print-footer mt-10">
                 <div class="d-flex justify-space-around">
-                    <div class="text-center">
-                        <p><strong>ອຳນວຍການ</strong></p>
-                        <br><br><br>
-                        <p>................................</p>
-                    </div>
-                    <div class="text-center">
-                        <p><strong>ວິຊາການ</strong></p>
-                        <br><br><br>
-                        <p>................................</p>
-                    </div>
-                    <div class="text-center">
-                        <p><strong>ຄູປະຈຳຫ້ອງ</strong></p>
-                        <br><br><br>
-                        <p>................................</p>
-                    </div>
+                    <div class="text-center"><p><strong>ອຳນວຍການ</strong></p><br><br><br><p>................................</p></div>
+                    <div class="text-center"><p><strong>ວິຊາການ</strong></p><br><br><br><p>................................</p></div>
+                    <div class="text-center"><p><strong>ຄູປະຈຳຫ້ອງ</strong></p><br><br><br><p>................................</p></div>
                 </div>
             </div>
         </div>
@@ -140,34 +121,15 @@
 
       <v-dialog v-model="dialog" max-width="400px">
          <v-card rounded="xl">
-            <v-card-title class="bg-teal text-white">ເພີ່ມວິຊາຮຽນ (ພາກຮຽນ {{ selectedSemester }})</v-card-title>
+            <v-card-title class="bg-teal text-white">ເພີ່ມວິຊາຮຽນ</v-card-title>
             <v-card-text class="pt-4">
                 <div class="mb-4 text-subtitle-1">
                     <strong>ວັນ:</strong> {{ getDayText(newItem.day_of_week) }} <br>
                     <strong>ເວລາ:</strong> {{ newItem.start_time }} - {{ newItem.end_time }}
                 </div>
-                <v-select 
-                    v-model="newItem.subject_name" 
-                    :items="subjectsList" 
-                    label="ວິຊາຮຽນ" 
-                    variant="outlined"
-                    prepend-inner-icon="mdi-book-open-variant"
-                ></v-select>
-                <v-select 
-                    v-model="newItem.teacher_name" 
-                    :items="teachersList" 
-                    item-title="full_name" 
-                    item-value="full_name" 
-                    label="ຄູສອນ" 
-                    variant="outlined"
-                    prepend-inner-icon="mdi-human-male-board"
-                ></v-select>
-                <v-text-field 
-                    v-model="newItem.room" 
-                    label="ຫ້ອງຮຽນ (Optional)" 
-                    variant="outlined"
-                    prepend-inner-icon="mdi-door"
-                ></v-text-field>
+                <v-select v-model="newItem.subject_name" :items="subjectsList" label="ວິຊາຮຽນ" variant="outlined"></v-select>
+                <v-select v-model="newItem.teacher_name" :items="teachersList" item-title="full_name" item-value="full_name" label="ຄູສອນ" variant="outlined"></v-select>
+                <v-text-field v-model="newItem.room" label="ຫ້ອງຮຽນ" variant="outlined"></v-text-field>
             </v-card-text>
             <v-card-actions class="justify-end px-4 pb-4">
                 <v-btn variant="text" @click="dialog = false">ຍົກເລີກ</v-btn>
@@ -192,7 +154,6 @@
       <v-snackbar v-model="snackbar.show" :color="snackbar.color" location="top" timeout="3000">
         {{ snackbar.message }}
       </v-snackbar>
-
     </v-card>
   </v-container>
 </template>
@@ -200,11 +161,11 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import api, { 
-    getClasses, 
+    getMyClasses, // ✅ ໃຊ້ API ນີ້ເພື່ອດຶງຫ້ອງຂອງຄູ
     createSchedule, 
     deleteSchedule,
     getTeachersForDropdown
-} from '../services/api';
+} from '../../services/api';
 
 const classes = ref([]);
 const selectedClass = ref(null);
@@ -235,38 +196,13 @@ const days = [
     { text: 'ສຸກ (Fri)', value: 'Friday' },
 ];
 
-// ✅ 1. ອັບເດດລາຍຊື່ວິຊາໃຫ້ເປັນມາດຕະຖານ
+// ວິຊາຮຽນມາດຕະຖານ
 const subjectsList = [
-    // ໝວດພາສາ ແລະ ວັນນະຄະດີ
-    'ພາສາລາວ (Lao Language)',
-    'ວັນນະຄະດີ (Literature)',
-    'ພາສາອັງກິດ (English)',
-    'ພາສາຝຣັ່ງ (French)',
-    'ພາສາຈີນ (Chinese)',
-
-    // ໝວດຄະນິດສາດ ແລະ ວິທະຍາສາດ
-    'ຄະນິດສາດ (Mathematics)',
-    'ວິທະຍາສາດທຳມະຊາດ (Natural Sciences)',
-    'ຟີຊິກສາດ (Physics)',
-    'ເຄມີສາດ (Chemistry)',
-    'ຊີວະສາດ (Biology)',
-
-    // ໝວດສັງຄົມສາດ
-    'ປະຫວັດສາດ (History)',
-    'ພູມສາດ (Geography)',
-    'ສຶກສາພົນລະເມືອງ (Civic Education)',
-    'ປ້ອງກັນຊາດ-ປ້ອງກັນຄວາມສະຫງົບ (National Defense)',
-
-    // ໝວດເຕັກໂນໂລຊີ ແລະ ສິລະປະ
-    'ICT/ຄອມພິວເຕີ (Computer)',
-    'ເຕັກໂນໂລຊີ (Technology)',
-    'ສິລະປະສຶກສາ (Arts)',
-    'ຫັດຖະກຳ (Handicrafts)',
-
-    // ໝວດພະລະ ແລະ ກິດຈະກຳ
-    'ພະລະສຶກສາ (Physical Education)',
-    'ແນະແນວ/ກິດຈະກຳຫ້ອງ (Guidance)',
-    'ກິດຈະກຳນອກຫຼັກສູດ (Extracurricular)'
+    'ພາສາລາວ (Lao Language)', 'ວັນນະຄະດີ (Literature)', 'ພາສາອັງກິດ (English)', 
+    'ຄະນິດສາດ (Mathematics)', 'ວິທະຍາສາດທຳມະຊາດ (Natural Sciences)', 
+    'ຟີຊິກສາດ (Physics)', 'ເຄມີສາດ (Chemistry)', 'ຊີວະສາດ (Biology)',
+    'ປະຫວັດສາດ (History)', 'ພູມສາດ (Geography)', 'ສຶກສາພົນລະເມືອງ (Civic Education)',
+    'ICT/ຄອມພິວເຕີ (Computer)', 'ພະລະສຶກສາ (Physical Education)', 'ສິລະປະສຶກສາ (Arts)'
 ];
 
 const dialog = ref(false);
@@ -279,11 +215,21 @@ const snackbar = ref({ show: false, message: '', color: 'success' });
 
 const init = async () => {
     try {
-        const classRes = await getClasses();
+        // ✅ ດຶງສະເພາະຫ້ອງທີ່ຄູສອນ
+        const classRes = await getMyClasses();
         classes.value = classRes.data;
+        
+        // ຖ້າມີຫ້ອງດຽວ ໃຫ້ເລືອກເລີຍ
+        if (classes.value.length === 1) {
+             selectedClass.value = classes.value[0].id;
+             fetchSchedule();
+        }
+
         const teacherRes = await getTeachersForDropdown();
         teachersList.value = teacherRes.data;
-    } catch (e) {}
+    } catch (e) {
+        console.error(e);
+    }
 };
 
 const fetchSchedule = async () => {
@@ -292,7 +238,6 @@ const fetchSchedule = async () => {
         const res = await api.get(`/lms/schedules/${selectedClass.value}?semester_id=${selectedSemester.value}`);
         schedules.value = res.data;
     } catch (error) {
-        console.error("Error fetching schedule:", error);
         schedules.value = [];
     }
 };
@@ -312,7 +257,7 @@ const handleSlotClick = (day, slot) => {
             start_time: slot.start,
             end_time: slot.end,
             subject_name: '',
-            teacher_name: '',
+            teacher_name: '', // ຄວນຈະ Default ເປັນຊື່ຄູຄົນນັ້ນ
             room: ''
         };
         dialog.value = true;
@@ -341,27 +286,15 @@ const executeDelete = async () => {
     finally { deleting.value = false; }
 };
 
-// ✅ 2. ອັບເດດລະບົບສີແຍກຕາມໝວດວິຊາ
 const getSubjectColor = (subjectName) => {
     if (!subjectName) return '#757575';
     const name = subjectName.toLowerCase();
-    
-    // ວິทย์-ຄະນິດ (Blue)
-    if (name.includes('ຄະນິດ') || name.includes('math') || name.includes('ຟີຊິກ') || name.includes('ເຄມີ') || name.includes('ຊີວະ') || name.includes('ວິທະຍາສາດ')) return '#1E88E5'; 
-    // ພາສາ (Red)
-    if (name.includes('ພາສາ') || name.includes('ວັນນະຄະດີ') || name.includes('english') || name.includes('french') || name.includes('chinese')) return '#E53935'; 
-    // ສັງຄົມ (Orange)
-    if (name.includes('ປະຫວັດ') || name.includes('ພູມສາດ') || name.includes('ພົນລະເມືອງ') || name.includes('ປ້ອງກັນຊາດ')) return '#FB8C00'; 
-    // ກິດຈະກຳ/ພະລະ (Green)
-    if (name.includes('ພະລະ') || name.includes('ສິລະປະ') || name.includes('ກິດຈະກຳ') || name.includes('ແນະແນວ')) return '#43A047'; 
-    // ເຕັກໂນໂລຊີ (Purple)
-    if (name.includes('ict') || name.includes('ຄອມພິວເຕີ') || name.includes('ເຕັກໂນໂລຊີ') || name.includes('ຫັດຖະກຳ')) return '#8E24AA'; 
-    
-    // ອື່ນໆ (Hash Color)
-    const colors = ['#00ACC1', '#546E7A', '#D81B60', '#3949AB'];
-    let hash = 0;
-    for (let i = 0; i < subjectName.length; i++) hash = subjectName.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
+    if (name.includes('ຄະນິດ') || name.includes('math') || name.includes('ຟີຊິກ') || name.includes('ເຄມີ')) return '#1E88E5'; 
+    if (name.includes('ພາສາ') || name.includes('ວັນນະຄະດີ') || name.includes('english')) return '#E53935'; 
+    if (name.includes('ປະຫວັດ') || name.includes('ພູມສາດ') || name.includes('ພົນລະເມືອງ')) return '#FB8C00'; 
+    if (name.includes('ພະລະ') || name.includes('ສິລະປະ')) return '#43A047'; 
+    if (name.includes('ict') || name.includes('ຄອມພິວເຕີ')) return '#8E24AA'; 
+    return '#546E7A';
 };
 
 const getClassName = (id) => classes.value.find(x => x.id === id)?.name || '';
@@ -372,6 +305,7 @@ onMounted(init);
 </script>
 
 <style scoped>
+/* CSS Grid ຕາຕະລາງ */
 .timetable-container { overflow-x: auto; border: 1px solid #ddd; border-radius: 8px; padding: 1px; }
 .timetable-wrapper { display: grid; grid-template-columns: 100px repeat(5, 1fr); gap: 1px; background-color: #ddd; min-width: 800px; }
 .time-header, .day-header, .time-col, .slot-cell { background-color: white; padding: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
@@ -380,7 +314,7 @@ onMounted(init);
 .slot-cell { min-height: 80px; position: relative; cursor: pointer; }
 .slot-cell:hover:not(.has-subject):not(.break-time) { background-color: #E0F7FA; }
 .subject-card { width: 100%; height: 100%; color: white; border-radius: 4px; padding: 4px; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.2); position: relative; font-size: 0.85rem; }
-.subject-name { font-weight: bold; line-height: 1.2; margin-bottom: 2px; text-decoration: none; }
+.subject-name { font-weight: bold; line-height: 1.2; margin-bottom: 2px; }
 .teacher-name { font-size: 0.75rem; opacity: 0.95; }
 .room-name { font-size: 0.7rem; font-style: italic; opacity: 0.9; }
 .delete-btn { position: absolute; top: 2px; right: 2px; opacity: 0; transition: opacity 0.2s; }
@@ -399,7 +333,6 @@ onMounted(init);
     .day-header, .time-col, .slot-cell { border: 1px solid black !important; background-color: white !important; color: black !important; page-break-inside: avoid; }
     .subject-card { box-shadow: none !important; border: none !important; background-color: transparent !important; color: black !important; padding: 0 !important; }
     .subject-name { font-size: 10pt; text-decoration: underline; }
-    .teacher-name { font-size: 9pt; }
     .print-header, .print-footer { display: block !important; }
     @page { size: A4 landscape; margin: 1cm; }
 }

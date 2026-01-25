@@ -144,6 +144,7 @@ export const getMyChildren = () => api.get('/parents/children');
 export const getChildDashboard = (studentId) => api.get(`/parents/student/${studentId}/dashboard`);
 export const getChildGrades = (studentId) => api.get(`/parents/student/${studentId}/grades`);
 export const getChildAssignments = (studentId) => api.get(`/parents/student/${studentId}/assignments`);
+export const getChildSchedule = (childId, semesterId = 1) => api.get(`/parents/student/${childId}/schedule?semester_id=${semesterId}`);
 
 // Reports
 export const getDashboardSummary = () => api.get('/reports/dashboard/summary');

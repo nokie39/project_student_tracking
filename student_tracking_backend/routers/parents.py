@@ -51,22 +51,20 @@ def get_my_children(
             if classroom:
                 class_name = classroom.name
 
-        # 🔥🔥🔥 ແກ້ໄຂ: Logic ດຶງຊື່ (Student Name vs User Name) 🔥🔥🔥
+        # Logic ດຶງຊື່
         display_name = child.full_name
         
-        # ຖ້າຊື່ໃນ Student ຫວ່າງ -> ໄປດຶງຈາກ User ທີ່ຜູກກັນ
         if not display_name and child.user_id:
              student_user = db.query(models.User).filter(models.User.id == child.user_id).first()
              if student_user:
                  display_name = student_user.full_name
         
-        # ຖ້າຍັງບໍ່ມີອີກ ໃຫ້ໃສ່ Default
         if not display_name:
             display_name = "ບໍ່ລະບຸຊື່"
 
         results.append({
             "id": child.id,
-            "name": display_name,  # ✅ ໃຊ້ຊື່ທີ່ດຶງມາໄດ້
+            "name": display_name,
             "student_code": child.student_code or "N/A",
             "class_name": class_name,
             "photo_url": getattr(child, 'profile_image', None) 
@@ -95,7 +93,7 @@ def get_child_dashboard_data(
     if not target_student:
         raise HTTPException(status_code=404, detail="Child not found or unauthorized")
 
-    # 🔥🔥🔥 ດຶງຊື່ທີ່ຖືກຕ້ອງ 🔥🔥🔥
+    # ດຶງຊື່ທີ່ຖືກຕ້ອງ
     student_name = target_student.full_name
     if not student_name and target_student.user_id:
         student_user = db.query(models.User).filter(models.User.id == target_student.user_id).first()
@@ -146,17 +144,18 @@ def get_child_dashboard_data(
     # 3. ຕາຕະລາງຮຽນມື້ນີ້
     today_weekday = str(datetime.now().weekday() + 1)
     
-    schedules = db.query(models.ClassSchedule)\
-        .filter(models.ClassSchedule.class_id == enrollment.class_id)\
-        .filter(models.ClassSchedule.day_of_week == today_weekday) \
-        .order_by(models.ClassSchedule.start_time)\
+    # ✅✅✅ ແກ້ໄຂບ່ອນນີ້: ປ່ຽນ models.ClassSchedule ເປັນ models.Schedule ✅✅✅
+    schedules = db.query(models.Schedule)\
+        .filter(models.Schedule.class_id == enrollment.class_id)\
+        .filter(models.Schedule.day_of_week == today_weekday) \
+        .order_by(models.Schedule.start_time)\
         .all()
 
     classroom = db.query(models.Class).filter(models.Class.id == enrollment.class_id).first()
 
     return {
         "student_info": {
-            "name": student_name, # ✅ ໃຊ້ຊື່ທີ່ດຶງມາໄດ້
+            "name": student_name,
             "class_name": classroom.name if classroom else "Unknown",
             "code": target_student.student_code,
             "total_points": behavior_points,
@@ -180,7 +179,6 @@ def get_child_grades(
 
     parent_user = db.query(models.User).filter(models.User.id == current_user['id']).first()
     
-    # ✅ Check Security
     target_student = next((child for child in parent_user.children if child.id == student_id), None)
     if not target_student:
         raise HTTPException(status_code=404, detail="Child not found")
@@ -221,7 +219,6 @@ def get_child_assignments_history(
 
     parent_user = db.query(models.User).filter(models.User.id == current_user['id']).first()
     
-    # ✅ Check Security
     target_student = next((child for child in parent_user.children if child.id == student_id), None)
     if not target_student:
         raise HTTPException(status_code=404, detail="Child not found")

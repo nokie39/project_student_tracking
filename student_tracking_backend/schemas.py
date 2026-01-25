@@ -189,6 +189,7 @@ class TalentUpdate(BaseModel):
 
 class ScheduleCreate(BaseModel):
     class_id: int
+    semester_id: int = 1
     subject_name: str
     teacher_name: Optional[str] = None
     day_of_week: str

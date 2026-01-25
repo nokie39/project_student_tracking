@@ -1,6 +1,5 @@
 <template>
-  <v-container>
-    <v-card elevation="2" rounded="lg">
+  <v-container fluid> <v-card elevation="2" rounded="lg" class="h-100">
       <v-card-title class="d-flex flex-wrap justify-space-between align-center py-4 px-4 bg-primary text-white">
         <div class="text-h6 d-flex align-center">
           <v-icon icon="mdi-account-school" start></v-icon>
@@ -20,25 +19,41 @@
 
       <v-card-text class="mt-4">
         <v-row align="center" class="mb-2">
-          <v-col cols="12" md="4">
+          <v-col cols="12" md="4" lg="3">
             <v-select
               v-model="selectedClass"
               :items="classes"
               item-title="name"
               item-value="id"
-              label="ເລືອກຫ້ອງຮຽນ"
-              variant="outlined"
-              density="compact"
+              label="ເລືອກຫ້ອງຮຽນ (Class)"
+              variant="solo-filled" 
+              density="comfortable"
               prepend-inner-icon="mdi-google-classroom"
               hide-details
               @update:model-value="fetchStudents"
               :loading="loadingClasses"
+              class="rounded-lg"
             ></v-select>
           </v-col>
-          <v-col cols="12" md="8" class="text-right">
-             <v-chip v-if="selectedClass" color="primary" variant="tonal">
+
+          <v-col cols="12" md="5" lg="6">
+            <v-text-field
+              v-model="search"
+              label="ຄົ້ນຫາ (ຊື່, ລະຫັດ, ເບີໂທ...)"
+              prepend-inner-icon="mdi-magnify"
+              variant="outlined"
+              density="comfortable"
+              hide-details
+              clearable
+              class="rounded-lg"
+              placeholder="ພິມຊື່ ຫຼື ລະຫັດນັກຮຽນ..."
+            ></v-text-field>
+          </v-col>
+
+          <v-col cols="12" md="3" lg="3" class="text-right d-none d-md-block">
+             <v-chip v-if="selectedClass" color="primary" variant="tonal" size="large" class="font-weight-bold">
                 <v-icon start>mdi-account-group</v-icon>
-                ຈຳນວນນັກຮຽນ: {{ students.length }} ຄົນ
+                ທັງໝົດ: {{ students.length }} ຄົນ
              </v-chip>
           </v-col>
         </v-row>
@@ -49,52 +64,72 @@
           :headers="headers"
           :items="students"
           :loading="loading"
-          class="elevation-0 border rounded-lg"
-          no-data-text="ບໍ່ພົບຂໍ້ມູນນັກຮຽນໃນຫ້ອງນີ້ (ຫຼື ຍັງບໍ່ໄດ້ເລືອກຫ້ອງ)"
+          :search="search" 
+          class="elevation-0 border rounded-lg student-table"
+          fixed-header
+          height="calc(100vh - 280px)" 
+          hover
+          items-per-page="25"
+          :items-per-page-options="[10, 25, 50, 100, { value: -1, title: 'ທັງໝົດ' }]"
+          items-per-page-text="ສະແດງແຖວຕໍ່ໜ້າ:"
+          no-data-text="⚠️ ບໍ່ພົບຂໍ້ມູນ (ກະລຸນາເລືອກຫ້ອງຮຽນ)"
         >
           <template v-slot:item.student_code="{ item }">
-            <v-chip size="small" color="blue-grey" variant="outlined" class="font-weight-bold">
+            <v-chip size="small" color="blue-grey-lighten-4" class="text-blue-grey-darken-3 font-weight-bold">
               {{ item.student_code }}
             </v-chip>
           </template>
 
+          <template v-slot:item.full_name="{ item }">
+             <div class="d-flex align-center py-2">
+                <v-avatar color="primary" size="32" class="mr-2" variant="tonal">
+                  <span class="text-subtitle-2">{{ item.full_name.charAt(0) }}</span>
+                </v-avatar>
+                <div>
+                    <div class="font-weight-bold text-body-1">{{ item.full_name }}</div>
+                    <div class="text-caption text-grey" v-if="item.parent_name">
+                        <v-icon size="x-small" start>mdi-human-male-child</v-icon> {{ item.parent_name }}
+                    </div>
+                </div>
+             </div>
+          </template>
+
           <template v-slot:item.email="{ item }">
              <div class="text-body-2 text-grey-darken-1">
-               <v-icon size="x-small" class="mr-1">mdi-email-outline</v-icon>
                {{ item.email || '-' }}
              </div>
           </template>
 
-          <template v-slot:item.full_name="{ item }">
-             <div class="font-weight-bold text-primary">{{ item.full_name }}</div>
-             <div class="text-caption text-grey" v-if="item.parent_name">
-               <v-icon size="x-small">mdi-human-male-child</v-icon> ຜູ້ປົກຄອງ: {{ item.parent_name }}
-             </div>
-          </template>
-
           <template v-slot:item.actions="{ item }">
-            <div class="d-flex gap-2 justify-end">
+            <div class="d-flex gap-1 justify-end align-center">
               
+              <v-tooltip text="ໃຫ້ຄະແນນພຶດຕິກຳ" location="top">
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    size="small"
+                    color="purple"
+                    variant="text"
+                    icon="mdi-star-circle"
+                    @click="openBehaviorDialog(item)"
+                  ></v-btn>
+                </template>
+              </v-tooltip>
+
               <v-menu location="bottom end">
                 <template v-slot:activator="{ props }">
                   <v-btn
                     v-bind="props"
                     size="small"
                     color="indigo"
-                    variant="tonal"
+                    variant="text"
                     icon="mdi-file-document-multiple-outline"
                   ></v-btn>
                 </template>
-                <v-list density="compact">
+                <v-list density="compact" elevation="3">
                   <v-list-subheader>ເລືອກລາຍງານ</v-list-subheader>
-                  
-                  <v-list-item @click="goToReport('detailed', item.id)" prepend-icon="mdi-history">
-                    <v-list-item-title>ປະຫວັດການຮຽນລະອຽດ</v-list-item-title>
-                  </v-list-item>
-
-                  <v-list-item @click="goToReport('transcript', item.id)" prepend-icon="mdi-file-certificate">
-                    <v-list-item-title>ໃບຢັ້ງຢືນຜົນການຮຽນ</v-list-item-title>
-                  </v-list-item>
+                  <v-list-item @click="goToReport('detailed', item.id)" prepend-icon="mdi-history" title="ປະຫວັດການຮຽນລະອຽດ"></v-list-item>
+                  <v-list-item @click="goToReport('transcript', item.id)" prepend-icon="mdi-file-certificate" title="ໃບຢັ້ງຢືນຜົນການຮຽນ"></v-list-item>
                 </v-list>
               </v-menu>
 
@@ -104,7 +139,7 @@
                     v-bind="props"
                     size="small"
                     color="info"
-                    variant="tonal"
+                    variant="text"
                     icon="mdi-account-details"
                     @click="viewPortfolio(item.id)"
                   ></v-btn>
@@ -117,7 +152,7 @@
                     v-bind="props"
                     size="small"
                     color="warning"
-                    variant="tonal"
+                    variant="text"
                     icon="mdi-pencil"
                     @click="openEditDialog(item)"
                   ></v-btn>
@@ -251,6 +286,58 @@
         </v-card>
       </v-dialog>
 
+      <v-dialog v-model="behaviorDialog" max-width="500px">
+        <v-card rounded="xl">
+          <v-card-title class="bg-purple-darken-2 text-white d-flex align-center">
+             <v-icon start>mdi-star-face</v-icon> ບັນທຶກພຶດຕິກຳ
+          </v-card-title>
+          <v-card-text class="pt-4">
+             <div class="text-center mb-4">
+                <v-avatar color="purple-lighten-5" size="60" class="mb-2">
+                   <span class="text-h5 font-weight-bold text-purple">{{ selectedStudentBehavior?.full_name?.charAt(0) }}</span>
+                </v-avatar>
+                <div class="text-h6 font-weight-bold">{{ selectedStudentBehavior?.full_name }}</div>
+                <div class="text-caption text-grey">ລະຫັດ: {{ selectedStudentBehavior?.student_code }}</div>
+             </div>
+
+             <v-form ref="behaviorFormRef" v-model="behaviorValid">
+               <v-radio-group v-model="behaviorItem.type" inline density="compact" class="justify-center">
+                  <v-radio label="ຊົມເຊີຍ (+)" value="POSITIVE" color="success"></v-radio>
+                  <v-radio label="ຕັກເຕືອນ (-)" value="NEGATIVE" color="error"></v-radio>
+               </v-radio-group>
+
+               <v-text-field
+                  v-model="behaviorItem.title"
+                  label="ຫົວຂໍ້ (ເຊັ່ນ: ຊ່ວຍເຫຼືອໝູ່, ມາຊ້າ) *"
+                  variant="outlined"
+                  :rules="[v => !!v || 'ກະລຸນາໃສ່ຫົວຂໍ້']"
+               ></v-text-field>
+
+               <v-text-field
+                  v-model.number="behaviorItem.points"
+                  label="ຄະແນນ (Points)"
+                  type="number"
+                  variant="outlined"
+                  prepend-inner-icon="mdi-numeric"
+                  :rules="[v => !!v || 'ກະລຸນາໃສ່ຄະແນນ']"
+               ></v-text-field>
+
+               <v-textarea
+                  v-model="behaviorItem.description"
+                  label="ລາຍລະອຽດເພີ່ມເຕີມ"
+                  variant="outlined"
+                  rows="2"
+                  auto-grow
+               ></v-textarea>
+             </v-form>
+          </v-card-text>
+          <v-card-actions class="justify-end px-4 pb-4">
+             <v-btn variant="text" @click="behaviorDialog = false">ຍົກເລີກ</v-btn>
+             <v-btn color="purple" variant="elevated" @click="saveBehavior" :loading="savingBehavior">ບັນທຶກ</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
       <v-snackbar v-model="snackbar.show" :color="snackbar.color" location="top" timeout="3000">
         <v-icon start>{{ snackbar.icon }}</v-icon>
         {{ snackbar.message }}
@@ -271,13 +358,16 @@ import {
   registerStudent, 
   enrollStudent, 
   getClasses,
-  updateStudent 
+  updateStudent,
+  addBehaviorLog,
+  getMyClasses
 } from '../../services/api';
 
 const router = useRouter();
 const students = ref([]);
 const classes = ref([]); 
 const selectedClass = ref(null); 
+const search = ref(''); // ✅ ຕົວແປ Search
 
 const loading = ref(false);
 const loadingClasses = ref(false);
@@ -286,6 +376,19 @@ const saving = ref(false);
 const valid = ref(false);
 const form = ref(null);
 const isEditing = ref(false); 
+
+// Behavior Dialog States
+const behaviorDialog = ref(false);
+const behaviorValid = ref(false);
+const behaviorFormRef = ref(null);
+const savingBehavior = ref(false);
+const selectedStudentBehavior = ref(null);
+const behaviorItem = ref({
+    type: 'POSITIVE',
+    title: '',
+    points: 5,
+    description: ''
+});
 
 // Snackbar State
 const snackbar = ref({
@@ -305,10 +408,10 @@ const showSnackbar = (msg, type = 'success') => {
 };
 
 const headers = [
-  { title: 'ລະຫັດ', key: 'student_code', align: 'start' },
-  { title: 'Email (Login)', key: 'email', align: 'start' }, 
+  { title: 'ລະຫັດ', key: 'student_code', align: 'start', width: '120px' },
   { title: 'ຊື່ ແລະ ນາມສະກຸນ', key: 'full_name', align: 'start' },
-  { title: 'ຈັດການ', key: 'actions', sortable: false, align: 'end' },
+  { title: 'Email (Login)', key: 'email', align: 'start' }, 
+  { title: 'ຈັດການ', key: 'actions', sortable: false, align: 'end', width: '180px' },
 ];
 
 const rules = {
@@ -341,7 +444,9 @@ const newItem = ref({ ...defaultItem });
 const init = async () => {
     loadingClasses.value = true;
     try {
-        const res = await getClasses();
+        const role = localStorage.getItem('role');
+        const res = role === 'teacher' ? await getMyClasses() : await getClasses();
+        
         classes.value = res.data;
         if (classes.value.length > 0) {
             selectedClass.value = classes.value[0].id;
@@ -394,6 +499,17 @@ const openEditDialog = (item) => {
     dialog.value = true;
 };
 
+const openBehaviorDialog = (item) => {
+    selectedStudentBehavior.value = item;
+    behaviorItem.value = {
+        type: 'POSITIVE',
+        title: '',
+        points: 5,
+        description: ''
+    };
+    behaviorDialog.value = true;
+};
+
 const closeDialog = () => {
     dialog.value = false;
     setTimeout(() => {
@@ -422,7 +538,6 @@ const save = async () => {
         payload.date_of_birth = "2010-01-01";
     }
 
-    // Convert empty strings to null for optional fields
     ['parent_email', 'parent_name', 'parent_phone', 'allergies', 'talents', 'health_info'].forEach(k => {
         if (!payload[k]) payload[k] = null;
     });
@@ -453,6 +568,34 @@ const save = async () => {
   }
 };
 
+const saveBehavior = async () => {
+    const { valid } = await behaviorFormRef.value.validate();
+    if (!valid) return;
+
+    savingBehavior.value = true;
+    try {
+        let pts = Math.abs(behaviorItem.value.points);
+        if (behaviorItem.value.type === 'NEGATIVE') pts = -pts;
+
+        await addBehaviorLog({
+            student_id: selectedStudentBehavior.value.id,
+            type: behaviorItem.value.type,
+            title: behaviorItem.value.title,
+            description: behaviorItem.value.description,
+            points: pts
+        });
+
+        showSnackbar("ບັນທຶກພຶດຕິກຳສຳເລັດ! ✅");
+        behaviorDialog.value = false;
+        
+    } catch (error) {
+        console.error(error);
+        showSnackbar("ເກີດຂໍ້ຜິດພາດ: " + (error.response?.data?.detail || error.message), "error");
+    } finally {
+        savingBehavior.value = false;
+    }
+};
+
 const viewPortfolio = (studentId) => {
   const role = localStorage.getItem('role');
   let routeName = 'StudentDetailAdmin'; 
@@ -466,7 +609,6 @@ const viewPortfolio = (studentId) => {
   router.push({ name: routeName, params: { id: studentId } });
 };
 
-// ✅ ຟັງຊັນໄປໜ້າ Report ຕ່າງໆ
 const goToReport = (type, studentId) => {
   const role = localStorage.getItem('role');
   let routeName = '';
@@ -490,10 +632,16 @@ onMounted(init);
 </script>
 
 <style scoped>
-.gap-2 {
-  gap: 8px;
+.gap-1 { gap: 4px; }
+.border-primary { border-color: rgba(var(--v-theme-primary), 0.2) !important; }
+/* ປັບແຕ່ງຕາຕະລາງໃຫ້ເບິ່ງງ່າຍ */
+.student-table :deep(th) {
+    font-weight: bold !important;
+    color: var(--v-theme-primary) !important;
+    background-color: #f5f5f5 !important;
 }
-.border-primary {
-    border-color: rgba(var(--v-theme-primary), 0.2) !important;
+.student-table :deep(tr:hover) {
+    background-color: #f0f7ff !important; /* ສີຟ້າອ່ອນເວລາເອົາເມົ້າໄປຊີ້ */
+    cursor: pointer;
 }
 </style>

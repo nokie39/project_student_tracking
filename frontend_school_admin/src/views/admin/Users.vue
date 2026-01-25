@@ -174,7 +174,7 @@ const editedItem = ref({
 
 const roles = [
   { title: 'ຄູປະຈຳວິຊາ (Teacher)', value: 'teacher' },
-  { title: 'ຄູປະຈຳຫ້ອງ/ຫົວໜ້າ (Head Teacher)', value: 'head_teacher' },
+  { title: 'ຫົວໜ້າຄູ (Head Teacher)', value: 'head_teacher' },
   { title: 'ຜູ້ບໍລິຫານ (Admin)', value: 'admin' },
   { title: 'ຜູ້ປົກຄອງ (Parent)', value: 'parent' }
 ];

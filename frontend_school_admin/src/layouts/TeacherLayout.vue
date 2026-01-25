@@ -79,7 +79,7 @@ const teacherInitial = computed(() => teacherName.charAt(0).toUpperCase());
 // ✅ Teacher Specific Menu
 const teacherMenus = [
   { title: 'Dashboard', icon: 'mdi-view-dashboard-outline', path: '/teacher/dashboard' },
-  { title: 'ຕາຕະລາງສອນ', icon: 'mdi-calendar-clock', path: '/teacher/schedule' }, // Future feature
+  { title: 'ຕາຕະລາງສອນ', icon: 'mdi-calendar-clock', path: '/teacher/schedule' },
   { title: 'ຈັດການນັກຮຽນ', icon: 'mdi-account-school-outline', path: '/teacher/students' }, // Usually inside Dashboard now
   { title: 'ເຊັກຊື່', icon: 'mdi-calendar-check', path: '/teacher/attendance' }, // Moved to Dashboard tabs
   { title: 'ຄະແນນ & ເກຣດ', icon: 'mdi-clipboard-text-outline', path: '/teacher/grades' }, // Future feature

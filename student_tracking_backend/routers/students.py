@@ -385,6 +385,7 @@ def get_students_by_class(
 # ==========================================
 @router.get("/dashboard")
 def get_student_dashboard(
+    semester_id: int = 1, # ✅ ຮັບຄ່າພາກຮຽນ (Default = 1)
     db: Session = Depends(database.get_db),
     current_user: dict = Depends(auth.get_current_user)
 ):
@@ -413,18 +414,14 @@ def get_student_dashboard(
             .order_by(models.Assignment.due_date.asc())\
             .limit(5).all()
 
-        today_weekday = datetime.now().weekday() + 1
+        today_weekday = datetime.now().weekday() + 1 # 1=Mon, 7=Sun
         
-        today_schedule = db.query(models.ClassSchedule)\
-            .filter(models.ClassSchedule.class_id == enrollment.class_id)\
-            .filter(models.ClassSchedule.day_of_week == str(today_weekday))\
-            .order_by(models.ClassSchedule.start_time.asc()).all()
-
-        if not today_schedule:
-             today_schedule = db.query(models.ClassSchedule)\
-                .filter(models.ClassSchedule.class_id == enrollment.class_id)\
-                .order_by(models.ClassSchedule.day_of_week.asc(), models.ClassSchedule.start_time.asc())\
-                .all()
+        # ✅ Filter ຕາມ semester_id
+        today_schedule = db.query(models.Schedule)\
+            .filter(models.Schedule.class_id == enrollment.class_id)\
+            .filter(models.Schedule.semester_id == semester_id)\
+            .filter(models.Schedule.day_of_week == str(today_weekday))\
+            .order_by(models.Schedule.start_time.asc()).all()
 
     logs = db.query(models.BehaviorLog).filter(models.BehaviorLog.student_id == student.id).all()
     pos_pts = sum(l.points for l in logs if l.type == "POSITIVE")
@@ -444,10 +441,11 @@ def get_student_dashboard(
     }
 
 # ==========================================
-# 8. FULL SCHEDULE
+# 8. FULL SCHEDULE (Student)
 # ==========================================
 @router.get("/schedule")
 def get_full_schedule(
+    semester_id: int = 1, # ✅ ຮັບຄ່າພາກຮຽນ
     db: Session = Depends(database.get_db),
     current_user: dict = Depends(auth.get_current_user)
 ):
@@ -460,9 +458,11 @@ def get_full_schedule(
     if not enrollment:
         return []
 
-    schedules = db.query(models.ClassSchedule)\
-        .filter(models.ClassSchedule.class_id == enrollment.class_id)\
-        .order_by(models.ClassSchedule.day_of_week.asc(), models.ClassSchedule.start_time.asc())\
+    # ✅ Filter ຕາມ semester_id
+    schedules = db.query(models.Schedule)\
+        .filter(models.Schedule.class_id == enrollment.class_id)\
+        .filter(models.Schedule.semester_id == semester_id)\
+        .order_by(models.Schedule.day_of_week.asc(), models.Schedule.start_time.asc())\
         .all()
         
     return schedules

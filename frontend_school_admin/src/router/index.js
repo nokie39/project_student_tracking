@@ -6,6 +6,7 @@ import MainLayout from '../layouts/MainLayout.vue'
 import StudentLayout from '../layouts/StudentLayout.vue'
 import HeadLayout from '../layouts/HeadLayout.vue'
 import TeacherLayout from '../layouts/TeacherLayout.vue'
+import ParentLayout from '../layouts/ParentLayout.vue'
 
 // --- Admin / Shared Views ---
 import Dashboard from '../views/admin/Dashboard.vue'
@@ -23,6 +24,7 @@ import SemesterReport from '../views/SemesterReport.vue'
 // --- Teacher Specific Views ---
 import TeacherDashboard from '../views/teacher/TeacherDashboard.vue'
 import BehaviorEntry from '../views/teacher/BehaviorEntry.vue'
+import TeacherSchedule from '../views/teacher/TeacherSchedule.vue';
 
 // --- Student Side Views ---
 import MyAssignments from '../views/student/MyAssignments.vue'
@@ -105,6 +107,12 @@ const routes = [
       { path: 'grades', name: 'TeacherGrades', component: Grades },
       { path: 'behavior', name: 'TeacherBehavior', component: BehaviorEntry },
       { path: 'lms', name: 'TeacherLMS', component: LMS },
+      {
+        path: 'schedule',
+        name: 'TeacherSchedule',
+        component: TeacherSchedule,
+        meta: { requiresAuth: true, role: 'teacher' }
+      },
 
       // ✅ REPORTS
       { path: 'reports/semester', name: 'TeacherSemesterReport', component: SemesterReport },
@@ -166,7 +174,7 @@ const routes = [
   // ==========================================
   {
     path: '/parent',
-    component: StudentLayout,
+    component: ParentLayout,
     meta: { requiresAuth: true, roles: ['parent'] },
     children: [
       { 
