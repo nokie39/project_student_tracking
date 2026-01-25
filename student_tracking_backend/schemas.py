@@ -70,11 +70,17 @@ class ClassCreate(BaseModel):
     teacher_id: int
     year_id: int
 
+# 🔥🔥🔥 ແກ້ໄຂບ່ອນນີ້ (Update ClassResponse) 🔥🔥🔥
 class ClassResponse(BaseModel):
     id: int
     name: str
     teacher_id: int
     year_id: int
+    
+    # ✅ ເພີ່ມ 2 ແຖວນີ້ ເພື່ອດຶງຂໍ້ມູນລາຍລະອຽດ
+    teacher: Optional[UserResponse] = None
+    academic_year: Optional[AcademicYearResponse] = None
+
     class Config:
         from_attributes = True
 

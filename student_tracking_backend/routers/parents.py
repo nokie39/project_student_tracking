@@ -141,10 +141,9 @@ def get_child_dashboard_data(
                 "due_date": assign.due_date
             })
 
-    # 3. ຕາຕະລາງຮຽນມື້ນີ້
+    # 3. ຕາຕະລາງຮຽນມື້ນີ້ (ໃຊ້ models.Schedule)
     today_weekday = str(datetime.now().weekday() + 1)
     
-    # ✅✅✅ ແກ້ໄຂບ່ອນນີ້: ປ່ຽນ models.ClassSchedule ເປັນ models.Schedule ✅✅✅
     schedules = db.query(models.Schedule)\
         .filter(models.Schedule.class_id == enrollment.class_id)\
         .filter(models.Schedule.day_of_week == today_weekday) \
@@ -178,7 +177,6 @@ def get_child_grades(
         raise HTTPException(status_code=403, detail="Parent access only")
 
     parent_user = db.query(models.User).filter(models.User.id == current_user['id']).first()
-    
     target_student = next((child for child in parent_user.children if child.id == student_id), None)
     if not target_student:
         raise HTTPException(status_code=404, detail="Child not found")
@@ -197,13 +195,20 @@ def get_child_grades(
         
         results.append({
             "month_name": months_map.get(g.month_id, f"Month {g.month_id}"),
+            "subject_name": g.subject_name,
             "score": g.total_score,
             "grade": grade_char,
             "midterm": g.midterm_score,
             "final": g.final_score
         })
 
-    return results
+    # ດຶງຊື່ລູກ
+    child_name = target_student.full_name
+    if not child_name and target_student.user_id:
+         u = db.query(models.User).filter(models.User.id == target_student.user_id).first()
+         if u: child_name = u.full_name
+
+    return {"student_name": child_name, "grades": results}
 
 # ==========================================
 # API 4: ດຶງວຽກບ້ານທັງໝົດຂອງລູກ (Assignments History)
@@ -218,7 +223,6 @@ def get_child_assignments_history(
         raise HTTPException(status_code=403, detail="Parent access only")
 
     parent_user = db.query(models.User).filter(models.User.id == current_user['id']).first()
-    
     target_student = next((child for child in parent_user.children if child.id == student_id), None)
     if not target_student:
         raise HTTPException(status_code=404, detail="Child not found")
@@ -251,7 +255,42 @@ def get_child_assignments_history(
             "description": assign.description,
             "due_date": assign.due_date,
             "status": status,
-            "score": submission.score if submission else None
+            "score": submission.score if submission else None,
+            "submission": {
+                "submitted_at": submission.submitted_at,
+                "feedback": submission.feedback
+            } if submission else None
         })
 
     return results
+
+# ==========================================
+# API 5: ດຶງຕາຕະລາງຮຽນຂອງລູກ (Schedule) 🔥 [Missing Part]
+# ==========================================
+@router.get("/student/{student_id}/schedule")
+def get_child_schedule(
+    student_id: int,
+    semester_id: int = 1,
+    db: Session = Depends(database.get_db),
+    current_user: dict = Depends(auth.get_current_user)
+):
+    if current_user['role'] != 'parent':
+        raise HTTPException(status_code=403, detail="Parent access only")
+
+    parent_user = db.query(models.User).filter(models.User.id == current_user['id']).first()
+    
+    target_student = next((child for child in parent_user.children if child.id == student_id), None)
+    if not target_student:
+        raise HTTPException(status_code=404, detail="Child not found")
+
+    enrollment = db.query(models.Enrollment).filter(models.Enrollment.student_id == target_student.id).first()
+    if not enrollment:
+        return []
+
+    schedules = db.query(models.Schedule)\
+        .filter(models.Schedule.class_id == enrollment.class_id)\
+        .filter(models.Schedule.semester_id == semester_id)\
+        .order_by(models.Schedule.day_of_week, models.Schedule.start_time)\
+        .all()
+        
+    return schedules

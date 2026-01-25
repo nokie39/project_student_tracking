@@ -17,9 +17,8 @@ import LMS from '../views/LMS.vue'
 import ScheduleAdmin from '../views/ScheduleAdmin.vue'
 import StudentDetail from '../views/student/StudentDetail.vue' 
 
-// --- Report Views (New) ---
+// --- Report Views ---
 import SemesterReport from '../views/SemesterReport.vue'
-// Transcript and DetailedReport are lazy-loaded below
 
 // --- Teacher Specific Views ---
 import TeacherDashboard from '../views/teacher/TeacherDashboard.vue'
@@ -28,16 +27,18 @@ import TeacherSchedule from '../views/teacher/TeacherSchedule.vue';
 
 // --- Student Side Views ---
 import MyAssignments from '../views/student/MyAssignments.vue'
-import MySchedule from '../views/student/Schedule.vue'
-import StudentDashboard from '../views/student/Dashboard.vue'
+import MySchedule from '../views/student/MySchedule.vue' // Note: Check filename matches
+import StudentDashboard from '../views/student/StudentDashboard.vue'
 
 // --- Head Teacher Views ---
 import TeacherMonitor from '../views/head/TeacherMonitor.vue'
 import Reports from '../views/head/Reports.vue'
 
-// --- Parent Views ---
-const ParentSelectChild = () => import('../views/parent/SelectChild.vue')
-const ParentDashboard = () => import('../views/parent/ParentDashboard.vue')
+// --- Parent Views (✅ Updated) ---
+import ParentDashboard from '../views/parent/ParentDashboard.vue'
+import ChildAssignments from '../views/parent/ChildAssignments.vue'
+import ChildGrades from '../views/parent/ChildGrades.vue'
+import ParentSchedule from '../views/parent/ParentSchedule.vue'
 
 const routes = [
   // 0. Login
@@ -82,7 +83,7 @@ const routes = [
       { path: 'behavior', name: 'AdminBehavior', component: BehaviorEntry },
       { path: 'lms', name: 'AdminLMS', component: LMS },
       
-      // ✅ REPORTS (Semester, Transcript, Detailed)
+      // Reports
       { path: 'reports/semester', name: 'AdminSemesterReport', component: SemesterReport },
       { path: 'transcript/:id', name: 'AdminStudentTranscript', component: () => import('../views/Transcript.vue') },
       { path: 'detailed-report/:id', name: 'AdminDetailedReport', component: () => import('../views/DetailedReport.vue') },
@@ -111,10 +112,9 @@ const routes = [
         path: 'schedule',
         name: 'TeacherSchedule',
         component: TeacherSchedule,
-        meta: { requiresAuth: true, role: 'teacher' }
       },
 
-      // ✅ REPORTS
+      // Reports
       { path: 'reports/semester', name: 'TeacherSemesterReport', component: SemesterReport },
       { path: 'transcript/:id', name: 'TeacherStudentTranscript', component: () => import('../views/Transcript.vue') },
       { path: 'detailed-report/:id', name: 'TeacherDetailedReport', component: () => import('../views/DetailedReport.vue') },
@@ -134,7 +134,7 @@ const routes = [
       { path: 'teachers', name: 'HeadTeachers', component: () => import('../views/head/TeachersList.vue') },
       { path: 'student-detail/:id', name: 'HeadStudentDetail', component: StudentDetail },
       
-      // ✅ REPORTS
+      // Reports
       { path: 'reports/semester', name: 'HeadSemesterReport', component: SemesterReport },
       { path: 'transcript/:id', name: 'HeadStudentTranscript', component: () => import('../views/Transcript.vue') },
       { path: 'detailed-report/:id', name: 'HeadDetailedReport', component: () => import('../views/DetailedReport.vue') },
@@ -163,14 +163,13 @@ const routes = [
         name: 'StudentGrades', 
         component: () => import('../views/student/MyGrades.vue') 
       },
-      // Student can view their own transcript/detailed report via Portfolio
       { path: 'transcript/:id', name: 'StudentTranscript', component: () => import('../views/Transcript.vue') },
       { path: 'detailed-report/:id', name: 'StudentDetailedReport', component: () => import('../views/DetailedReport.vue') },
     ]
   },
 
   // ==========================================
-  // 5. PARENT ROUTES
+  // 5. PARENT ROUTES (✅ Updated Structure)
   // ==========================================
   {
     path: '/parent',
@@ -178,25 +177,28 @@ const routes = [
     meta: { requiresAuth: true, roles: ['parent'] },
     children: [
       { 
-        path: 'select-child', 
-        name: 'ParentSelectChild', 
-        component: ParentSelectChild,
-        meta: { hideNavbar: true }
+        path: '', 
+        redirect: '/parent/dashboard' 
       },
       { 
-        path: 'dashboard/:studentId', 
+        path: 'dashboard', 
         name: 'ParentDashboard', 
         component: ParentDashboard 
       },
       { 
-        path: 'grades/:studentId', 
-        name: 'ParentChildGrades', 
-        component: () => import('../views/parent/ChildGrades.vue') 
+        path: 'grades', 
+        name: 'ParentGrades', 
+        component: ChildGrades 
       },
       { 
-        path: 'assignments/:studentId', 
-        name: 'ParentChildAssignments', 
-        component: () => import('../views/parent/ChildAssignments.vue') 
+        path: 'assignments', 
+        name: 'ParentAssignments', 
+        component: ChildAssignments 
+      },
+      { 
+        path: 'schedule', 
+        name: 'ParentSchedule', 
+        component: ParentSchedule 
       },
     ]
   },
@@ -223,7 +225,7 @@ router.beforeEach((to, from, next) => {
     if (userRole === 'student') return next('/student/dashboard');
     if (userRole === 'teacher') return next('/teacher/dashboard');
     if (userRole === 'head_teacher') return next('/head/monitor');
-    if (userRole === 'parent') return next('/parent/select-child');
+    if (userRole === 'parent') return next('/parent/dashboard'); // ✅ Fix Redirect
     return next('/admin/dashboard');
   }
 
@@ -232,7 +234,7 @@ router.beforeEach((to, from, next) => {
     if (userRole === 'student') return next('/student/dashboard');
     if (userRole === 'teacher') return next('/teacher/dashboard');
     if (userRole === 'head_teacher') return next('/head/monitor');
-    if (userRole === 'parent') return next('/parent/select-child');
+    if (userRole === 'parent') return next('/parent/dashboard'); // ✅ Fix Redirect
     return next('/admin/dashboard');
   }
 

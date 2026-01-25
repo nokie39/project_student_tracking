@@ -17,10 +17,10 @@
           <v-list-item-title>ຕິດຕາມການສອນ</v-list-item-title>
         </v-list-item>
 
-        <v-list-item to="/head/reports" active-color="white" rounded="lg" class="mb-1">
+        <!-- <v-list-item to="/head/reports" active-color="white" rounded="lg" class="mb-1">
           <template v-slot:prepend><v-icon icon="mdi-chart-bar"></v-icon></template>
           <v-list-item-title>ສະຖິຕິ ແລະ ລາຍງານ</v-list-item-title>
-        </v-list-item>
+        </v-list-item> -->
 
         <v-list-item to="/head/teachers" active-color="white" rounded="lg" class="mb-1">
           <template v-slot:prepend><v-icon icon="mdi-account-group"></v-icon></template>
