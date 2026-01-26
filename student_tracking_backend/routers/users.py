@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from typing import List
 import models, schemas, auth, database
+from email_utils import send_otp_email # ✅ Import ຟັງຊັນສົ່ງເມວ
 
 router = APIRouter(tags=["Users & Authentication"])
 
@@ -27,12 +28,21 @@ def request_otp(request: schemas.LoginRequest, db: Session = Depends(database.ge
     db.add(new_otp)
     db.commit()
 
-    # *ໃນລະບົບຈິງ ຕ້ອງສົ່ງ Email*
-    print(f"=============================")
-    print(f"OTP for {request.email}: {otp}")
-    print(f"=============================")
+    # ====================================================
+    # ✅ UPDATE: ສົ່ງ Email ແທ້ (ແທນການ Print)
+    # ====================================================
+    email_sent = send_otp_email(request.email, otp)
 
-    return {"message": "OTP sent to your email (Check console for testing)"}
+    if email_sent:
+        return {"message": "✅ ສົ່ງ OTP ໄປທາງ Email ສຳເລັດແລ້ວ! (Sent to Email)"}
+    else:
+        # ⚠️ ກໍລະນີສົ່ງບໍ່ໄດ້ (Fallback): ໃຫ້ Print ອອກ Console ຄືເກົ່າ ເພື່ອບໍ່ໃຫ້ລະບົບຕິດຂັດ
+        print(f"=============================")
+        print(f"❌ Email Sending Failed!")
+        print(f"🔑 Backup OTP for {request.email}: {otp}")
+        print(f"=============================")
+        return {"message": "⚠️ ສົ່ງ Email ບໍ່ໄດ້! ກະລຸນາເບິ່ງລະຫັດໃນ Console (Server Log)"}
+
 
 # 2. ຢືນຢັນ OTP ແລະ ຮັບ Token (Step 2)
 @router.post("/auth/verify", response_model=schemas.TokenResponse)

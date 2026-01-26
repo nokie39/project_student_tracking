@@ -5,8 +5,10 @@ from database import engine
 from routers import users, academic, students, grades, schedules, attendance, lms, reports, behavior, head, enrollments, parents
 
 
+
 # ສ້າງ Database
 models.Base.metadata.create_all(bind=engine)
+
 
 app = FastAPI()
 
