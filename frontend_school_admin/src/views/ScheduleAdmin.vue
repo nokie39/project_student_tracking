@@ -4,7 +4,7 @@
       <v-card-title class="d-flex flex-wrap justify-space-between align-center py-4 px-4 bg-teal-darken-1 text-white print-hide">
         <div class="text-h6 d-flex align-center">
           <v-icon icon="mdi-calendar-clock" start></v-icon>
-          ຈັດການຕາຕະລາງຮຽນ (Academic Schedule)
+          ຈັດການຕາຕະລາງຮຽນ
         </div>
         <v-btn 
             color="white" 
@@ -237,36 +237,11 @@ const days = [
 
 // ✅ 1. ອັບເດດລາຍຊື່ວິຊາໃຫ້ເປັນມາດຕະຖານ
 const subjectsList = [
-    // ໝວດພາສາ ແລະ ວັນນະຄະດີ
-    'ພາສາລາວ (Lao Language)',
-    'ວັນນະຄະດີ (Literature)',
-    'ພາສາອັງກິດ (English)',
-    'ພາສາຝຣັ່ງ (French)',
-    'ພາສາຈີນ (Chinese)',
-
-    // ໝວດຄະນິດສາດ ແລະ ວິທະຍາສາດ
-    'ຄະນິດສາດ (Mathematics)',
-    'ວິທະຍາສາດທຳມະຊາດ (Natural Sciences)',
-    'ຟີຊິກສາດ (Physics)',
-    'ເຄມີສາດ (Chemistry)',
-    'ຊີວະສາດ (Biology)',
-
-    // ໝວດສັງຄົມສາດ
-    'ປະຫວັດສາດ (History)',
-    'ພູມສາດ (Geography)',
-    'ສຶກສາພົນລະເມືອງ (Civic Education)',
-    'ປ້ອງກັນຊາດ-ປ້ອງກັນຄວາມສະຫງົບ (National Defense)',
-
-    // ໝວດເຕັກໂນໂລຊີ ແລະ ສິລະປະ
-    'ICT/ຄອມພິວເຕີ (Computer)',
-    'ເຕັກໂນໂລຊີ (Technology)',
-    'ສິລະປະສຶກສາ (Arts)',
-    'ຫັດຖະກຳ (Handicrafts)',
-
-    // ໝວດພະລະ ແລະ ກິດຈະກຳ
-    'ພະລະສຶກສາ (Physical Education)',
-    'ແນະແນວ/ກິດຈະກຳຫ້ອງ (Guidance)',
-    'ກິດຈະກຳນອກຫຼັກສູດ (Extracurricular)'
+    'ພາສາລາວ (Lao Language)', 'ວັນນະຄະດີ (Literature)', 'ພາສາອັງກິດ (English)', 'ພາສາຝຣັ່ງ (French)', 'ພາສາຈີນ (Chinese)',
+    'ຄະນິດສາດ (Mathematics)', 'ວິທະຍາສາດທຳມະຊາດ (Natural Sciences)', 'ຟີຊິກສາດ (Physics)', 'ເຄມີສາດ (Chemistry)', 'ຊີວະສາດ (Biology)',
+    'ປະຫວັດສາດ (History)', 'ພູມສາດ (Geography)', 'ສຶກສາພົນລະເມືອງ (Civic Education)', 'ປ້ອງກັນຊາດ-ປ້ອງກັນຄວາມສະຫງົບ (National Defense)',
+    'ICT/ຄອມພິວເຕີ (Computer)', 'ເຕັກໂນໂລຊີ (Technology)', 'ສິລະປະສຶກສາ (Arts)', 'ຫັດຖະກຳ (Handicrafts)',
+    'ພະລະສຶກສາ (Physical Education)', 'ແນະແນວ/ກິດຈະກຳຫ້ອງ (Guidance)', 'ກິດຈະກຳນອກຫຼັກສູດ (Extracurricular)'
 ];
 
 const dialog = ref(false);
@@ -286,11 +261,22 @@ const init = async () => {
     } catch (e) {}
 };
 
+// ==========================================
+// ✅ ຈຸດສຳຄັນ: ຕັດວິນາທີອອກ (08:00:00 -> 08:00)
+// ==========================================
 const fetchSchedule = async () => {
     if (!selectedClass.value) return;
     try {
         const res = await api.get(`/lms/schedules/${selectedClass.value}?semester_id=${selectedSemester.value}`);
-        schedules.value = res.data;
+        
+        // ແປງຂໍ້ມູນກ່ອນເກັບໃສ່ state
+        schedules.value = res.data.map(item => ({
+            ...item,
+            // ໃຊ້ substring(0, 5) ເພື່ອຕັດ :00 ທາງຫຼັງອອກ
+            start_time: item.start_time.substring(0, 5),
+            end_time: item.end_time.substring(0, 5)
+        }));
+
     } catch (error) {
         console.error("Error fetching schedule:", error);
         schedules.value = [];
@@ -325,7 +311,7 @@ const saveSchedule = async () => {
         await createSchedule(newItem.value);
         snackbar.value = { show: true, message: 'ບັນທຶກສຳເລັດ', color: 'success' };
         dialog.value = false;
-        fetchSchedule();
+        fetchSchedule(); // ດຶງຂໍ້ມູນໃໝ່ຫຼັງບັນທຶກ
     } catch (error) {
         snackbar.value = { show: true, message: 'ຊ່ອງນີ້ມີວິຊາຮຽນແລ້ວ', color: 'error' };
     } finally {
@@ -345,23 +331,12 @@ const executeDelete = async () => {
 const getSubjectColor = (subjectName) => {
     if (!subjectName) return '#757575';
     const name = subjectName.toLowerCase();
-    
-    // ວິทย์-ຄະນິດ (Blue)
-    if (name.includes('ຄະນິດ') || name.includes('math') || name.includes('ຟີຊິກ') || name.includes('ເຄມີ') || name.includes('ຊີວະ') || name.includes('ວິທະຍາສາດ')) return '#1E88E5'; 
-    // ພາສາ (Red)
-    if (name.includes('ພາສາ') || name.includes('ວັນນະຄະດີ') || name.includes('english') || name.includes('french') || name.includes('chinese')) return '#E53935'; 
-    // ສັງຄົມ (Orange)
-    if (name.includes('ປະຫວັດ') || name.includes('ພູມສາດ') || name.includes('ພົນລະເມືອງ') || name.includes('ປ້ອງກັນຊາດ')) return '#FB8C00'; 
-    // ກິດຈະກຳ/ພະລະ (Green)
-    if (name.includes('ພະລະ') || name.includes('ສິລະປະ') || name.includes('ກິດຈະກຳ') || name.includes('ແນະແນວ')) return '#43A047'; 
-    // ເຕັກໂນໂລຊີ (Purple)
-    if (name.includes('ict') || name.includes('ຄອມພິວເຕີ') || name.includes('ເຕັກໂນໂລຊີ') || name.includes('ຫັດຖະກຳ')) return '#8E24AA'; 
-    
-    // ອື່ນໆ (Hash Color)
-    const colors = ['#00ACC1', '#546E7A', '#D81B60', '#3949AB'];
-    let hash = 0;
-    for (let i = 0; i < subjectName.length; i++) hash = subjectName.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
+    if (name.includes('ຄະນິດ') || name.includes('math') || name.includes('ຟີຊິກ')) return '#1E88E5'; 
+    if (name.includes('ພາສາ') || name.includes('english')) return '#E53935'; 
+    if (name.includes('ປະຫວັດ') || name.includes('ພູມສາດ')) return '#FB8C00'; 
+    if (name.includes('ພະລະ') || name.includes('ສິລະປະ')) return '#43A047'; 
+    if (name.includes('ict') || name.includes('ຄອມ')) return '#8E24AA'; 
+    return '#00ACC1';
 };
 
 const getClassName = (id) => classes.value.find(x => x.id === id)?.name || '';

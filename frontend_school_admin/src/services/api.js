@@ -2,13 +2,24 @@
 
 import axios from 'axios';
 
-// 1. ສ້າງ Instance ກ່ອນ (ປະກາດຕົວແປ api)
+// // 1. ສ້າງ Instance ກ່ອນ (ປະກາດຕົວແປ api)
+// const api = axios.create({
+//   // baseURL: import.meta.env.VITE_API_URL || 'https://127.0.0.1:8000',
+//   baseURL: import.meta.env.VITE_API_URL,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
+
+const API_URL = 'https://student-api-338902421338.us-central1.run.app';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000',
+  baseURL: API_URL, // <--- ໃຊ້ຕົວປ່ຽນທີ່ເຮົາປະກາດຂ້າງເທິງ
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
 
 // 2. ຈາກນັ້ນຈຶ່ງໃສ່ Interceptors
 api.interceptors.request.use(
@@ -129,7 +140,8 @@ export const gradeSubmission = (data) => api.post('/lms/grade', data);
 export const getTeacherClasses = () => api.get('/lms/my-classes'); // ✅ ເພີ່ມ Function ນີ້
 
 // Schedules
-export const getClassSchedule = (classId) => api.get(`/lms/schedules/${classId}`);
+export const getClassSchedule = (classId, semesterId = 1) => 
+    api.get(`/lms/schedules/${classId}?semester_id=${semesterId}`);
 export const createSchedule = (data) => api.post('/lms/schedules', data);
 export const deleteSchedule = (id) => api.delete(`/lms/schedules/${id}`);
 

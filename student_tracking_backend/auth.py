@@ -6,11 +6,12 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session # <--- Import ເພີ່ມ
 import random
 import database, models # <--- Import ເພີ່ມ (ເພື່ອດຶງຂໍ້ມູນ User ID ຈາກ Database)
+import os
 
 # Secret Key
-SECRET_KEY = "mysecretkey_super_secure"
+SECRET_KEY = os.environ.get("SECRET_KEY", "laos_student_tracking_secret_key") 
 ALGORITHM = "HS256"
-# ACCESS_TOKEN_EXPIRE_MINUTES = 1440 #60 * 24 
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # ອາຍຸ 7 ມື້ (ຕົວຢ່າງ)
 
 # ໃຊ້ HTTPBearer ເພື່ອໃຫ້ວາງ Token ໄດ້ງ່າຍໆ
 security = HTTPBearer()
@@ -25,7 +26,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt

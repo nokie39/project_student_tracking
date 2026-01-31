@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 import models, schemas, database, auth
 
@@ -116,7 +116,11 @@ def get_all_classes(
     db: Session = Depends(database.get_db),
     current_user: dict = Depends(auth.get_current_user)
 ):
-    query = db.query(models.Class)
+    query = db.query(models.Class).options(
+        joinedload(models.Class.enrollments),
+        joinedload(models.Class.academic_year),
+        joinedload(models.Class.teacher)
+    )
 
     # ✅ Logic: ຖ້າເປັນ Teacher ໃຫ້ເຫັນສະເພາະຫ້ອງທີ່ຕົນເອງຮັບຜິດຊອບ
     if current_user['role'] == 'teacher':

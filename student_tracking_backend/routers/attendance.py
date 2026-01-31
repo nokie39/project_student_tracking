@@ -1,59 +1,64 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import date
 import models, schemas, database, auth
 
-router = APIRouter(prefix="/attendance", tags=["Attendance"])
+router = APIRouter(tags=["Attendance"])
 
 # ==========================================
 # 1. ດຶງຂໍ້ມູນການເຊັກຊື່ (Returns Full Student List + Status)
 # ==========================================
-@router.get("/class/{class_id}", response_model=List[schemas.AttendanceLogView])
+@router.get("/attendance/class/{class_id}")
 def get_class_attendance(
     class_id: int,
-    date_str: date, # format: YYYY-MM-DD
-    period: str = Query(default="DAILY"), # ✅ ເພີ່ມ: ຮັບຄ່າ Period (ຖ້າບໍ່ສົ່ງມາຈະເປັນ DAILY)
+    date_str: date, # FastAPI ຮັບມາເປັນ Date Object
+    period: str = Query(default="DAILY"), 
     db: Session = Depends(database.get_db),
     current_user: dict = Depends(auth.get_current_user)
 ):
-    # ກວດສອບສິດ (Teacher ຕ້ອງສອນຫ້ອງນີ້, Admin ເບິ່ງໄດ້ໝົດ)
-    if current_user['role'] == 'teacher':
-        cls = db.query(models.Class).filter(models.Class.id == class_id).first()
-        if not cls or cls.teacher_id != current_user['id']:
-            raise HTTPException(status_code=403, detail="Not authorized for this class")
+    # 1. ກວດສອບວ່າຫ້ອງຮຽນມີຢູ່ແທ້ບໍ່?
+    cls = db.query(models.Class).filter(models.Class.id == class_id).first()
+    if not cls:
+        raise HTTPException(status_code=404, detail=f"Class ID {class_id} not found")
 
-    # 1. ດຶງນັກຮຽນທັງໝົດໃນຫ້ອງ (Join Student + User + Enrollment)
+    # 2. ດຶງນັກຮຽນ + ຂໍ້ມູນ User (Join ຜ່ານ Enrollment)
     students = db.query(models.Student, models.User)\
         .join(models.User, models.User.id == models.Student.user_id)\
         .join(models.Enrollment, models.Enrollment.student_id == models.Student.id)\
         .filter(models.Enrollment.class_id == class_id)\
         .all()
 
-    # 2. ດຶງຂໍ້ມູນການເຊັກຊື່ຂອງມື້ນັ້ນ + ຕາມ Period ນັ້ນໆ (ຖ້າມີ)
+    if not students:
+        return []
+
+    # ✅ ແກ້ໄຂ: ແປງ date object ເປັນ string ກ່ອນ query (ເພື່ອໃຫ້ກົງກັບ Database ທີ່ເປັນ VARCHAR)
+    date_query = str(date_str) 
+
+    # 3. ດຶງຂໍ້ມູນການເຊັກຊື່
     attendance_records = db.query(models.Attendance).filter(
         models.Attendance.class_id == class_id,
-        models.Attendance.date == date_str,
-        models.Attendance.period == period # ✅ ເພີ່ມ: ກອງຕາມ Period
+        models.Attendance.date == date_query, # <--- ໃຊ້ຕົວປ່ຽນທີ່ແປງເປັນ String ແລ້ວ
+        models.Attendance.period == period
     ).all()
 
     # ສ້າງ Dictionary ເພື່ອໃຫ້ຄົ້ນຫາໄວຂຶ້ນ { student_id: record }
     att_map = {rec.student_id: rec for rec in attendance_records}
 
     results = []
-    for student, user in students:
-        # ຖ້າມີຂໍ້ມູນການເຊັກຊື່ແລ້ວ ໃຫ້ໃຊ້ຂໍ້ມູນນັ້ນ, ຖ້າບໍ່ມີ ໃຫ້ Default ເປັນ "PRESENT"
-        record = att_map.get(student.id)
+    for std, usr in students:
+        record = att_map.get(std.id)
         
         results.append({
-            "student_id": student.id,
-            "student_code": student.student_code,
-            "full_name": user.full_name,
-            "status": record.status if record else "PRESENT", # Default Value
+            "student_id": std.id,
+            "student_code": std.student_code,
+            "full_name": usr.full_name,
+            "gender": usr.gender if hasattr(usr, "gender") else "",
+            "status": record.status if record else "PRESENT",
             "remark": record.remark if record else None
         })
-    
-    # ລຽງຕາມລະຫັດນັກຮຽນ
+
+    # ລຽງຕາມລະຫັດນັກຮຽນ 
     results.sort(key=lambda x: x['student_code'])
     
     return results
@@ -61,7 +66,7 @@ def get_class_attendance(
 # ==========================================
 # 2. ບັນທຶກການເຊັກຊື່ (Batch Save)
 # ==========================================
-@router.post("/save", status_code=status.HTTP_200_OK)
+@router.post("/attendance/save", status_code=status.HTTP_200_OK)
 def save_attendance_batch(
     data: schemas.AttendanceBatchRequest,
     db: Session = Depends(database.get_db),
@@ -70,21 +75,23 @@ def save_attendance_batch(
     if current_user['role'] not in ['teacher', 'admin', 'head_teacher']:
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    # 1. ລຶບຂໍ້ມູນເກົ່າຂອງວັນນັ້ນ + Period ນັ້ນ ອອກກ່ອນ (Update ແບບລ້າງແລ້ວສ້າງໃໝ່)
-    # ⚠️ ຕ້ອງລະບຸ period ດ້ວຍ ບໍ່ດັ່ງນັ້ນມັນຈະລຶບຂອງວິຊາອື່ນໄປນຳ
+    # ແປງວັນທີເປັນ String ຄືກັນ
+    date_query = str(data.date)
+
+    # ລຶບຂໍ້ມູນເກົ່າ
     db.query(models.Attendance).filter(
         models.Attendance.class_id == data.class_id,
-        models.Attendance.date == data.date,
-        models.Attendance.period == data.period # ✅ ເພີ່ມ: ລຶບສະເພາະ Period ນີ້
+        models.Attendance.date == date_query, # <--- ແກ້ບ່ອນນີ້
+        models.Attendance.period == data.period
     ).delete()
     
-    # 2. ສ້າງຂໍ້ມູນໃໝ່
+    # ສ້າງຂໍ້ມູນໃໝ່
     new_records = []
     for item in data.students:
         new_records.append(models.Attendance(
             class_id=data.class_id,
-            date=data.date,
-            period=data.period, # ✅ ເພີ່ມ: ບັນທຶກ Period
+            date=str(data.date), # <--- ແກ້ບ່ອນນີ້ (Save ເປັນ String)
+            period=data.period,
             student_id=item.student_id,
             status=item.status,
             remark=item.remark
@@ -93,4 +100,16 @@ def save_attendance_batch(
     db.add_all(new_records)
     db.commit()
     
-    return {"message": f"Saved {len(new_records)} records successfully for period: {data.period}"}
+    return {"message": f"Saved {len(new_records)} records successfully"}
+
+# ... (ສ່ວນ get_student_attendance_history ບໍ່ຕ້ອງແກ້ກໍໄດ້ ຫຼື ຈະແກ້ເປັນ str() ຄືກັນກໍດີ) ...
+@router.get("/attendance/student/{student_id}")
+def get_student_attendance_history(
+    student_id: int,
+    db: Session = Depends(database.get_db),
+    current_user: dict = Depends(auth.get_current_user)
+):
+    attendance = db.query(models.Attendance).filter(
+        models.Attendance.student_id == student_id
+    ).order_by(models.Attendance.date.desc()).all()
+    return attendance

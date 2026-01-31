@@ -88,10 +88,10 @@ const adminMenus = [
 
   // 2. ຈັດການການຮຽນ-ການສອນ (Admin ກໍຄວນເຫັນ)
   { title: 'ຈັດຕາຕະລາງ', icon: 'mdi-calendar-import', path: '/admin/academic' },
-  { title: 'ເຊັກຊື່ (Attendance)', icon: 'mdi-calendar-check-outline', path: '/admin/attendance' },
-  { title: 'ຄະແນນ (Grades)', icon: 'mdi-clipboard-list-outline', path: '/admin/grades' },
+  { title: 'ເຊັກຊື່', icon: 'mdi-calendar-check-outline', path: '/admin/attendance' },
+  { title: 'ຄະແນນ', icon: 'mdi-clipboard-list-outline', path: '/admin/grades' },
   //{ title: 'ພຶດຕິກຳ (Behavior)', icon: 'mdi-star-circle-outline', path: '/admin/behavior' },
-  { title: 'ສັ່ງວຽກບ້ານ (LMS)', icon: 'mdi-book-open-variant-outline', path: '/admin/lms' },
+  { title: 'ສັ່ງວຽກບ້ານ', icon: 'mdi-book-open-variant-outline', path: '/admin/lms' },
 ];
 
 // Current Page Title Logic

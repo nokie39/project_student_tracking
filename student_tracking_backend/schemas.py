@@ -21,8 +21,8 @@ class TokenResponse(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     full_name: str
-    role: str  # 'admin', 'teacher', 'head_teacher'
-    student_ids: Optional[List[int]] = [] # ຮັບ ID ນັກຮຽນຫຼາຍຄົນໄດ້
+    role: str
+    student_ids: Optional[List[int]] = []
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
@@ -40,7 +40,6 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# --- Admin Linking ---
 class AssignTeacherRequest(BaseModel):
     head_teacher_id: int
     teacher_id: int
@@ -65,21 +64,39 @@ class AcademicYearResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# --- ✅ (1) ສ້າງ Schema ຍ່ອຍສຳລັບ Student/Enrollment ກ່ອນ ClassResponse ---
+class StudentSimple(BaseModel):
+    id: int
+    full_name: str
+    student_code: Optional[str] = None # ກັນໄວ້ຖ້າຍັງບໍ່ມີລະຫັດ
+    class Config:
+        from_attributes = True
+
+class EnrollmentSimple(BaseModel):
+    id: int
+    student: Optional[StudentSimple] = None
+    class Config:
+        from_attributes = True
+
 class ClassCreate(BaseModel):
     name: str
     teacher_id: int
     year_id: int
 
-# 🔥🔥🔥 ແກ້ໄຂບ່ອນນີ້ (Update ClassResponse) 🔥🔥🔥
+# 🔥🔥🔥 CLASS RESPONSE (UPDATED) 🔥🔥🔥
 class ClassResponse(BaseModel):
     id: int
     name: str
-    teacher_id: int
-    year_id: int
+    # ✅ (2) ຕ້ອງເປັນ Optional ເພາະໃນ DB ອາດຈະເປັນ Null
+    teacher_id: Optional[int] = None 
+    year_id: Optional[int] = None
     
-    # ✅ ເພີ່ມ 2 ແຖວນີ້ ເພື່ອດຶງຂໍ້ມູນລາຍລະອຽດ
+    # ✅ (3) Object ທີ່ Join ມາ
     teacher: Optional[UserResponse] = None
     academic_year: Optional[AcademicYearResponse] = None
+    
+    # ✅ (4) ລາຍຊື່ນັກຮຽນໃນຫ້ອງ (ຈາກ joinedload)
+    enrollments: List[EnrollmentSimple] = [] 
 
     class Config:
         from_attributes = True
@@ -150,7 +167,7 @@ class GradeUpdate(BaseModel):
     class_id: int
     month_id: int
     subject_name: str = "GENERAL"
-    score_type: str  # "ATTENDANCE", "HOMEWORK", "MIDTERM", "FINAL"
+    score_type: str
     score_value: float
     reason: Optional[str] = None
 
@@ -168,7 +185,7 @@ class GradeLogResponse(BaseModel):
 
 class BehaviorLogCreate(BaseModel):
     student_id: int
-    type: str  # "POSITIVE" ຫຼື "NEGATIVE"
+    type: str
     title: str
     description: Optional[str] = None
     points: int
@@ -199,8 +216,8 @@ class ScheduleCreate(BaseModel):
     subject_name: str
     teacher_name: Optional[str] = None
     day_of_week: str
-    start_time: str # ຮັບເປັນ String "HH:MM"
-    end_time: str   # ຮັບເປັນ String "HH:MM"
+    start_time: str
+    end_time: str
     room: Optional[str] = None
     note: Optional[str] = None
 
@@ -216,23 +233,22 @@ class ScheduleResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# 🔥🔥 UPDATED ATTENDANCE SCHEMAS 🔥🔥
 class AttendanceItem(BaseModel):
     student_id: int
-    status: str  # PRESENT, ABSENT, LATE, PERMISSION
+    status: str
     remark: Optional[str] = None
 
 class AttendanceBatchRequest(BaseModel):
     class_id: int
-    date: date # ຮັບເປັນ YYYY-MM-DD
-    period: str = "DAILY" # ✅ ເພີ່ມ Field ນີ້ (Default ແມ່ນລາຍວັນ)
+    date: date
+    period: str = "DAILY"
     students: List[AttendanceItem]
 
 class AttendanceLogView(BaseModel):
     student_id: int
     student_code: str
     full_name: str
-    status: str = "PRESENT" # Default ໃຫ້ເປັນ "ມາ"
+    status: str = "PRESENT"
     remark: Optional[str] = None
     
 class AttendanceResponse(BaseModel):
@@ -241,7 +257,7 @@ class AttendanceResponse(BaseModel):
     class_id: int
     date: date
     status: str
-    period: str # ✅ ເພີ່ມໃຫ້ Frontend ເຫັນ
+    period: str
     remark: Optional[str] = None
     class Config:
         from_attributes = True
